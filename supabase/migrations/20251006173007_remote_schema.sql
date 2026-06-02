@@ -1,1 +1,0 @@
--- Migration applied directly via Supabase dashboard (remote_schema)

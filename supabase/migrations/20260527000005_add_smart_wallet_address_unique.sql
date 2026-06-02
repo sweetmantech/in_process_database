@@ -1,3 +1,0 @@
-ALTER TABLE in_process_wallets
-  ADD CONSTRAINT in_process_wallets_smart_wallet_address_key
-  UNIQUE (smart_wallet_address);
