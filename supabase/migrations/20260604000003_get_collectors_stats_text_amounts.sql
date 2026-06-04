@@ -108,8 +108,8 @@ BEGIN
     p.collector,
     p.username,
     p.collected_count,
-    to_char(p.eth_spent,  'FM0.999999999999999999'),
-    to_char(p.usdc_spent, 'FM0.999999'),
+    to_char(p.eth_spent,  'FM999999999999990.999999999999999999'),
+    to_char(p.usdc_spent, 'FM999999999999990.999999'),
     p.total_count
   FROM paged p
   ORDER BY
