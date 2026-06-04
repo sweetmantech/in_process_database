@@ -1,11 +1,7 @@
 -- Step 1: Rewrite moment_matches_channel
 -- Channel is now stored directly on in_process_moments; no message table join needed.
 -- Moments with channel IS NULL are treated as 'web' to preserve backward compatibility.
-CREATE OR REPLACE FUNCTION public.moment_matches_channel(p_moment_id uuid, p_channel text)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-AS $$
+CREATE OR REPLACE FUNCTION public.moment_matches_channel (p_moment_id UUID, p_channel TEXT) returns BOOLEAN language sql stable AS $$
   SELECT
     p_channel IS NULL
     OR EXISTS (
@@ -22,18 +18,14 @@ $$;
 -- Step 2: Rewrite get_nudges
 -- chat_id now comes from account_notifications.telegram_chat_id.
 -- Duplicate-send prevention uses last_nudge_sent_at instead of message text matching.
-DROP FUNCTION IF EXISTS public.get_nudges();
+DROP FUNCTION if EXISTS public.get_nudges ();
 
-CREATE FUNCTION public.get_nudges()
-RETURNS TABLE (
-  artist_address         text,
-  chat_id                text,
-  days_since_last_moment integer,
-  nudge_period           integer
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE FUNCTION public.get_nudges () returns TABLE (
+  artist_address TEXT,
+  chat_id TEXT,
+  days_since_last_moment INTEGER,
+  nudge_period INTEGER
+) language sql stable AS $function$
   WITH nudge_artists AS (
     SELECT
       an.artist_address,
@@ -75,20 +67,14 @@ $function$;
 -- Channel counts now come from in_process_moments.channel directly.
 -- chat_id now comes from account_notifications.telegram_chat_id.
 -- Moments with channel IS NULL are counted as web.
-CREATE OR REPLACE FUNCTION public.get_weekly_wrap_up_stats(
-  p_days integer DEFAULT 7
-)
-RETURNS TABLE (
-  username       text,
-  chat_id        text,
-  telegram_count integer,
-  web_count      integer,
-  api_count      integer,
-  sms_count      integer
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_weekly_wrap_up_stats (p_days INTEGER DEFAULT 7) returns TABLE (
+  username TEXT,
+  chat_id TEXT,
+  telegram_count INTEGER,
+  web_count INTEGER,
+  api_count INTEGER,
+  sms_count INTEGER
+) language sql stable AS $function$
   WITH qualified_artists AS (
     SELECT a.address, an.telegram_chat_id
     FROM public.account_notifications an
@@ -132,9 +118,12 @@ $function$;
 
 -- Step 4: Drop message tables (child tables first to respect foreign keys)
 DROP TABLE IF EXISTS public.in_process_message_moment;
+
 DROP TABLE IF EXISTS public.in_process_messages;
+
 DROP TABLE IF EXISTS public.in_process_message_metadata;
 
 -- Step 5: Drop enums that were only used by the dropped tables
-DROP TYPE IF EXISTS public.message_client;
-DROP TYPE IF EXISTS public.message_role;
+DROP TYPE if EXISTS public.message_client;
+
+DROP TYPE if EXISTS public.message_role;

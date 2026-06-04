@@ -1,16 +1,17 @@
-create table "public"."in_process_artist_smart_wallets" (
-    "smart_wallet_address" text not null,
-    "artist_address" text not null,
-    "created_at" timestamp with time zone not null default now()
+CREATE TABLE "public"."in_process_artist_smart_wallets" (
+  "smart_wallet_address" TEXT NOT NULL,
+  "artist_address" TEXT NOT NULL,
+  "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-
-alter table "public"."in_process_artist_smart_wallets" enable row level security;
+ALTER TABLE "public"."in_process_artist_smart_wallets" enable ROW level security;
 
 CREATE UNIQUE INDEX in_process_artist_smart_wallets_pkey ON public.in_process_artist_smart_wallets USING btree (smart_wallet_address);
 
-alter table "public"."in_process_artist_smart_wallets" add constraint "in_process_artist_smart_wallets_pkey" PRIMARY KEY using index "in_process_artist_smart_wallets_pkey";
+ALTER TABLE "public"."in_process_artist_smart_wallets"
+ADD CONSTRAINT "in_process_artist_smart_wallets_pkey" PRIMARY KEY USING index "in_process_artist_smart_wallets_pkey";
 
-alter table "public"."in_process_artist_smart_wallets" add constraint "in_process_artist_smart_wallets_artist_address_fkey" FOREIGN KEY (artist_address) REFERENCES in_process_artists(address) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_artist_smart_wallets"
+ADD CONSTRAINT "in_process_artist_smart_wallets_artist_address_fkey" FOREIGN key (artist_address) REFERENCES in_process_artists (address) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_artist_smart_wallets" validate constraint "in_process_artist_smart_wallets_artist_address_fkey";
+ALTER TABLE "public"."in_process_artist_smart_wallets" validate CONSTRAINT "in_process_artist_smart_wallets_artist_address_fkey";

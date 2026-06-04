@@ -1,35 +1,29 @@
 -- Rename default_admin column to creator in in_process_collections
-ALTER TABLE "public"."in_process_collections" RENAME COLUMN "default_admin" TO "creator";
+ALTER TABLE "public"."in_process_collections"
+RENAME COLUMN "default_admin" TO "creator";
 
 -- Rename the foreign key constraint
 ALTER TABLE "public"."in_process_collections"
-  RENAME CONSTRAINT "in_process_collections_default_admin_fkey" TO "in_process_collections_creator_fkey";
+RENAME CONSTRAINT "in_process_collections_default_admin_fkey" TO "in_process_collections_creator_fkey";
 
 -- Update the lowercase trigger to use new column name
-CREATE OR REPLACE FUNCTION public.in_process_collections_lowercase()
- RETURNS trigger
- LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.in_process_collections_lowercase () returns trigger language plpgsql AS $function$
 begin
   new.address := lower(new.address);
   new.creator := lower(new.creator);
   new.payout_recipient := lower(new.payout_recipient);
   return new;
 end;
-$function$
-;
+$function$;
 
 -- Re-create get_collection_timeline with updated column name
-CREATE OR REPLACE FUNCTION public.get_collection_timeline(
-  p_collection text,
-  p_limit integer DEFAULT 100,
-  p_page integer DEFAULT 1,
-  p_chainid numeric DEFAULT 8453,
-  p_hidden boolean DEFAULT false
-)
- RETURNS json
- LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_collection_timeline (
+  p_collection TEXT,
+  p_limit INTEGER DEFAULT 100,
+  p_page INTEGER DEFAULT 1,
+  p_chainid NUMERIC DEFAULT 8453,
+  p_hidden BOOLEAN DEFAULT FALSE
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit int := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 100), 1000));
   clamped_page int := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));
@@ -174,19 +168,15 @@ BEGIN
     )
   );
 END;
-$function$
-;
+$function$;
 
 -- Re-create get_in_process_timeline with updated column name
-CREATE OR REPLACE FUNCTION public.get_in_process_timeline(
-  p_limit integer DEFAULT 100,
-  p_page integer DEFAULT 1,
-  p_chainid numeric DEFAULT 8453,
-  p_hidden boolean DEFAULT false
-)
- RETURNS json
- LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_in_process_timeline (
+  p_limit INTEGER DEFAULT 100,
+  p_page INTEGER DEFAULT 1,
+  p_chainid NUMERIC DEFAULT 8453,
+  p_hidden BOOLEAN DEFAULT FALSE
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit int := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 100), 1000));
   clamped_page int := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));
@@ -332,21 +322,17 @@ BEGIN
     )
   );
 END;
-$function$
-;
+$function$;
 
 -- Re-create get_artist_timeline with updated column name
-CREATE OR REPLACE FUNCTION public.get_artist_timeline(
-  p_artist text,
-  p_type text DEFAULT NULL,
-  p_limit integer DEFAULT 100,
-  p_page integer DEFAULT 1,
-  p_chainid numeric DEFAULT 8453,
-  p_hidden boolean DEFAULT false
-)
- RETURNS json
- LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_artist_timeline (
+  p_artist TEXT,
+  p_type TEXT DEFAULT NULL,
+  p_limit INTEGER DEFAULT 100,
+  p_page INTEGER DEFAULT 1,
+  p_chainid NUMERIC DEFAULT 8453,
+  p_hidden BOOLEAN DEFAULT FALSE
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit int := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 100), 1000));
   clamped_page int := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));
@@ -555,20 +541,16 @@ BEGIN
     )
   );
 END;
-$function$
-;
+$function$;
 
 -- Re-create get_in_process_payments with updated column name
-CREATE OR REPLACE FUNCTION public.get_in_process_payments(
-  p_limit integer DEFAULT 20,
-  p_page integer DEFAULT 1,
-  p_artists text[] DEFAULT NULL,
-  p_collectors text[] DEFAULT NULL,
-  p_chainid numeric DEFAULT 8453
-)
-RETURNS json
-LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_in_process_payments (
+  p_limit INTEGER DEFAULT 20,
+  p_page INTEGER DEFAULT 1,
+  p_artists TEXT[] DEFAULT NULL,
+  p_collectors TEXT[] DEFAULT NULL,
+  p_chainid NUMERIC DEFAULT 8453
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit int := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 20), 100));
   clamped_page int := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));
@@ -677,5 +659,4 @@ BEGIN
     )
   );
 END;
-$function$
-;
+$function$;

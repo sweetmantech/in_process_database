@@ -1,1 +1,2 @@
-alter table "public"."in_process_tokens" add column "payoutRecipientNotDefaultAdmin" text;
+ALTER TABLE "public"."in_process_tokens"
+ADD COLUMN "payoutRecipientNotDefaultAdmin" TEXT;

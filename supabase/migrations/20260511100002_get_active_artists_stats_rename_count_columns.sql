@@ -3,31 +3,28 @@
 -- Postgres requires DROP first because RETURNS TABLE column names cannot be
 -- changed via CREATE OR REPLACE. We drop both possible prior signatures so this
 -- migration is safe regardless of which version is currently installed.
-DROP FUNCTION IF EXISTS public.get_active_artists_stats(TEXT, INT, INT, TEXT);
-DROP FUNCTION IF EXISTS public.get_active_artists_stats(TEXT, INT, INT, TEXT, TEXT, TEXT);
+DROP FUNCTION if EXISTS public.get_active_artists_stats (TEXT, INT, INT, TEXT);
 
-CREATE FUNCTION public.get_active_artists_stats(
-  p_period     TEXT DEFAULT 'all',
-  p_limit      INT  DEFAULT 20,
-  p_page       INT  DEFAULT 1,
-  p_artist     TEXT DEFAULT NULL,
-  p_sort_by    TEXT DEFAULT 'created_count',
+DROP FUNCTION if EXISTS public.get_active_artists_stats (TEXT, INT, INT, TEXT, TEXT, TEXT);
+
+CREATE FUNCTION public.get_active_artists_stats (
+  p_period TEXT DEFAULT 'all',
+  p_limit INT DEFAULT 20,
+  p_page INT DEFAULT 1,
+  p_artist TEXT DEFAULT NULL,
+  p_sort_by TEXT DEFAULT 'created_count',
   p_sort_order TEXT DEFAULT 'desc'
-)
-RETURNS TABLE (
-  address          TEXT,
-  username         TEXT,
-  created_count    BIGINT,
+) returns TABLE (
+  address TEXT,
+  username TEXT,
+  created_count BIGINT,
   airdropped_count BIGINT,
-  telegram_count   BIGINT,
-  web_count        BIGINT,
-  api_count        BIGINT,
-  sms_count        BIGINT,
-  total_count      BIGINT
-)
-LANGUAGE plpgsql
-STABLE
-AS $$
+  telegram_count BIGINT,
+  web_count BIGINT,
+  api_count BIGINT,
+  sms_count BIGINT,
+  total_count BIGINT
+) language plpgsql stable AS $$
 DECLARE
   v_sort_by    TEXT := LOWER(COALESCE(p_sort_by, 'created_count'));
   v_sort_order TEXT := LOWER(COALESCE(p_sort_order, 'desc'));

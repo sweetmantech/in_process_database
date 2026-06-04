@@ -1,1 +1,2 @@
-alter table "public"."in_process_payments" drop column "currency";
+ALTER TABLE "public"."in_process_payments"
+DROP COLUMN "currency";

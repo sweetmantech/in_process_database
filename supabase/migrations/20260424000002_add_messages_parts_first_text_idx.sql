@@ -6,6 +6,4 @@
 -- B-tree + text_pattern_ops only handles prefix LIKE.
 -- gin_trgm_ops handles both prefix and substring LIKE, so one index covers both.
 -- Requires pg_trgm (already enabled in this project).
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_in_process_messages_parts_first_text_trgm
-  ON public.in_process_messages
-  USING gin ((parts -> 0 ->> 'text') gin_trgm_ops);
+CREATE INDEX CONCURRENTLY if NOT EXISTS idx_in_process_messages_parts_first_text_trgm ON public.in_process_messages USING gin ((parts - > 0 - > > 'text') gin_trgm_ops);

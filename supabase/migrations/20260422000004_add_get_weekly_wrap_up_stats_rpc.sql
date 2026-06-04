@@ -1,30 +1,26 @@
 -- Fast pre-filter of artists that can receive a telegram wrap-up.
-CREATE INDEX IF NOT EXISTS idx_in_process_artists_qualified
-  ON public.in_process_artists (address)
-  WHERE username IS NOT NULL AND username <> ''
-    AND telegram_username IS NOT NULL AND telegram_username <> '';
+CREATE INDEX if NOT EXISTS idx_in_process_artists_qualified ON public.in_process_artists (address)
+WHERE
+  username IS NOT NULL
+  AND username <> ''
+  AND telegram_username IS NOT NULL
+  AND telegram_username <> '';
 
 -- Powers the LATERAL "latest telegram chat_id per artist" lookup.
-CREATE INDEX IF NOT EXISTS idx_in_process_message_metadata_telegram_artist
-  ON public.in_process_message_metadata (artist_address, created_at DESC)
-  WHERE client = 'telegram' AND artist_address IS NOT NULL;
+CREATE INDEX if NOT EXISTS idx_in_process_message_metadata_telegram_artist ON public.in_process_message_metadata (artist_address, created_at DESC)
+WHERE
+  client = 'telegram'
+  AND artist_address IS NOT NULL;
 
 -- ── Function ────────────────────────────────────────────────────────────────
-
-CREATE OR REPLACE FUNCTION public.get_weekly_wrap_up_stats(
-  p_days integer DEFAULT 7
-)
-RETURNS TABLE (
-  username       text,
-  chat_id        text,
-  telegram_count integer,
-  web_count      integer,
-  api_count      integer,
-  sms_count      integer
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_weekly_wrap_up_stats (p_days INTEGER DEFAULT 7) returns TABLE (
+  username TEXT,
+  chat_id TEXT,
+  telegram_count INTEGER,
+  web_count INTEGER,
+  api_count INTEGER,
+  sms_count INTEGER
+) language sql stable AS $function$
   -- Artists qualifying for a telegram wrap-up (username + telegram_username set).
   WITH qualified_artists AS (
     SELECT address

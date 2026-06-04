@@ -1,26 +1,26 @@
-  create table "public"."in_process_airdrops" (
-    "id" uuid not null default gen_random_uuid(),
-    "artist_address" text not null,
-    "amount" numeric not null,
-    "updated_at" timestamp with time zone not null,
-    "moment" uuid not null
-      );
+CREATE TABLE "public"."in_process_airdrops" (
+  "id" UUID NOT NULL DEFAULT GEN_RANDOM_UUID(),
+  "artist_address" TEXT NOT NULL,
+  "amount" NUMERIC NOT NULL,
+  "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL,
+  "moment" UUID NOT NULL
+);
 
-
-alter table "public"."in_process_airdrops" enable row level security;
+ALTER TABLE "public"."in_process_airdrops" enable ROW level security;
 
 CREATE UNIQUE INDEX in_process_airdrops_pkey ON public.in_process_airdrops USING btree (id);
 
-alter table "public"."in_process_airdrops" add constraint "in_process_airdrops_pkey" PRIMARY KEY using index "in_process_airdrops_pkey";
+ALTER TABLE "public"."in_process_airdrops"
+ADD CONSTRAINT "in_process_airdrops_pkey" PRIMARY KEY USING index "in_process_airdrops_pkey";
 
-alter table "public"."in_process_airdrops" add constraint "in_process_airdrops_artist_address_fkey" FOREIGN KEY (artist_address) REFERENCES public.in_process_artists(address) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_airdrops"
+ADD CONSTRAINT "in_process_airdrops_artist_address_fkey" FOREIGN key (artist_address) REFERENCES public.in_process_artists (address) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_airdrops" validate constraint "in_process_airdrops_artist_address_fkey";
+ALTER TABLE "public"."in_process_airdrops" validate CONSTRAINT "in_process_airdrops_artist_address_fkey";
 
-alter table "public"."in_process_airdrops" add constraint "in_process_airdrops_moment_fkey" FOREIGN KEY (moment) REFERENCES public.in_process_moments(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_airdrops"
+ADD CONSTRAINT "in_process_airdrops_moment_fkey" FOREIGN key (moment) REFERENCES public.in_process_moments (id) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_airdrops" validate constraint "in_process_airdrops_moment_fkey";
+ALTER TABLE "public"."in_process_airdrops" validate CONSTRAINT "in_process_airdrops_moment_fkey";
 
 CREATE INDEX in_process_airdrops_moment_artist_address_idx ON public.in_process_airdrops USING btree (moment, artist_address);
-
-

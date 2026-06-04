@@ -1,1 +1,1 @@
-DROP INDEX IF EXISTS public.idx_in_process_transfers_moment;
+DROP INDEX if EXISTS public.idx_in_process_transfers_moment;

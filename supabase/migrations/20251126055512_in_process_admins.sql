@@ -1,51 +1,57 @@
+ALTER TABLE "public"."in_process_collection_admins"
+DROP CONSTRAINT "in_process_collection_admins_artist_address_fkey";
 
-alter table "public"."in_process_collection_admins" drop constraint "in_process_collection_admins_artist_address_fkey";
+ALTER TABLE "public"."in_process_collection_admins"
+DROP CONSTRAINT "in_process_collection_admins_collection_fkey";
 
-alter table "public"."in_process_collection_admins" drop constraint "in_process_collection_admins_collection_fkey";
+ALTER TABLE "public"."in_process_moment_admins"
+DROP CONSTRAINT "in_process_moment_admins_artist_address_fkey";
 
-alter table "public"."in_process_moment_admins" drop constraint "in_process_moment_admins_artist_address_fkey";
+ALTER TABLE "public"."in_process_moment_admins"
+DROP CONSTRAINT "in_process_moment_admins_moment_fkey";
 
-alter table "public"."in_process_moment_admins" drop constraint "in_process_moment_admins_moment_fkey";
+ALTER TABLE "public"."in_process_collection_admins"
+DROP CONSTRAINT "in_process_collection_admins_pkey";
 
-alter table "public"."in_process_collection_admins" drop constraint "in_process_collection_admins_pkey";
+ALTER TABLE "public"."in_process_moment_admins"
+DROP CONSTRAINT "in_process_moment_admins_pkey";
 
-alter table "public"."in_process_moment_admins" drop constraint "in_process_moment_admins_pkey";
+DROP INDEX if EXISTS "public"."in_process_collection_admins_collection_artist_address_unique";
 
-drop index if exists "public"."in_process_collection_admins_collection_artist_address_unique";
+DROP INDEX if EXISTS "public"."in_process_collection_admins_pkey";
 
-drop index if exists "public"."in_process_collection_admins_pkey";
+DROP INDEX if EXISTS "public"."in_process_moment_admins_moment_artist_address_unique";
 
-drop index if exists "public"."in_process_moment_admins_moment_artist_address_unique";
+DROP INDEX if EXISTS "public"."in_process_moment_admins_pkey";
 
-drop index if exists "public"."in_process_moment_admins_pkey";
+DROP TABLE "public"."in_process_collection_admins";
 
-drop table "public"."in_process_collection_admins";
+DROP TABLE "public"."in_process_moment_admins";
 
-drop table "public"."in_process_moment_admins";
+CREATE TABLE "public"."in_process_admins" (
+  "id" UUID NOT NULL DEFAULT GEN_RANDOM_UUID(),
+  "collection" UUID NOT NULL,
+  "token_id" NUMERIC NOT NULL,
+  "hidden" BOOLEAN NOT NULL DEFAULT FALSE,
+  "granted_at" TIMESTAMP WITH TIME ZONE NOT NULL,
+  "artist_address" TEXT NOT NULL
+);
 
-
-  create table "public"."in_process_admins" (
-    "id" uuid not null default gen_random_uuid(),
-    "collection" uuid not null,
-    "token_id" numeric not null,
-    "hidden" boolean not null default false,
-    "granted_at" timestamp with time zone not null,
-    "artist_address" text not null
-      );
-
-
-alter table "public"."in_process_admins" enable row level security;
+ALTER TABLE "public"."in_process_admins" enable ROW level security;
 
 CREATE UNIQUE INDEX in_process_admins_pkey ON public.in_process_admins USING btree (id);
 
-alter table "public"."in_process_admins" add constraint "in_process_admins_pkey" PRIMARY KEY using index "in_process_admins_pkey";
+ALTER TABLE "public"."in_process_admins"
+ADD CONSTRAINT "in_process_admins_pkey" PRIMARY KEY USING index "in_process_admins_pkey";
 
-alter table "public"."in_process_admins" add constraint "in_process_admins_artist_address_fkey" FOREIGN KEY (artist_address) REFERENCES public.in_process_artists(address) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_admins"
+ADD CONSTRAINT "in_process_admins_artist_address_fkey" FOREIGN key (artist_address) REFERENCES public.in_process_artists (address) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_admins" validate constraint "in_process_admins_artist_address_fkey";
+ALTER TABLE "public"."in_process_admins" validate CONSTRAINT "in_process_admins_artist_address_fkey";
 
-alter table "public"."in_process_admins" add constraint "in_process_admins_collection_fkey" FOREIGN KEY (collection) REFERENCES public.in_process_collections(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_admins"
+ADD CONSTRAINT "in_process_admins_collection_fkey" FOREIGN key (collection) REFERENCES public.in_process_collections (id) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_admins" validate constraint "in_process_admins_collection_fkey";
+ALTER TABLE "public"."in_process_admins" validate CONSTRAINT "in_process_admins_collection_fkey";
 
 CREATE UNIQUE INDEX in_process_admins_collection_artist_address_token_id_unique ON public.in_process_admins USING btree (collection, artist_address, token_id);

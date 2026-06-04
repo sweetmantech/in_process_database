@@ -3,18 +3,17 @@
 -- and then again in 20260530000001 (renamed artist_id → wallet).
 -- The UNIQUE (transfer, artist) constraint was implicitly dropped with the
 -- column; recreate it as UNIQUE (transfer, wallet) and update the trigger.
-
 -- Add unique constraint so ON CONFLICT works
 ALTER TABLE public.in_process_notifications
-  ADD CONSTRAINT unique_transfer_wallet UNIQUE (transfer, wallet);
+ADD CONSTRAINT unique_transfer_wallet UNIQUE (transfer, wallet);
 
 -- Drop existing trigger first (required before dropping the function)
-DROP TRIGGER IF EXISTS transfer_notification_trigger ON public.in_process_transfers;
-DROP FUNCTION IF EXISTS create_transfer_notification();
+DROP TRIGGER if EXISTS transfer_notification_trigger ON public.in_process_transfers;
+
+DROP FUNCTION if EXISTS create_transfer_notification ();
 
 -- Recreate trigger function using the current column name
-CREATE OR REPLACE FUNCTION create_transfer_notification()
-RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION create_transfer_notification () returns trigger AS $$
 BEGIN
   INSERT INTO in_process_notifications (transfer, wallet, viewed)
   SELECT
@@ -28,10 +27,8 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ language plpgsql;
 
 CREATE TRIGGER transfer_notification_trigger
-  AFTER INSERT ON public.in_process_transfers
-  FOR EACH ROW
-  WHEN (NEW.value >= 0)
-  EXECUTE FUNCTION create_transfer_notification();
+AFTER INSERT ON public.in_process_transfers FOR EACH ROW WHEN (new.value >= 0)
+EXECUTE FUNCTION create_transfer_notification ();

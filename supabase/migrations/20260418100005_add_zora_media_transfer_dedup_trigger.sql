@@ -1,9 +1,6 @@
-DROP FUNCTION IF EXISTS public.set_zora_media_token_latest_holder_on_insert();
+DROP FUNCTION if EXISTS public.set_zora_media_token_latest_holder_on_insert ();
 
-CREATE OR REPLACE FUNCTION public.set_zora_media_token_latest_holder_on_insert()
-RETURNS trigger
-LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.set_zora_media_token_latest_holder_on_insert () returns trigger language plpgsql AS $function$
 BEGIN
   IF NOT EXISTS (
     SELECT 1
@@ -38,9 +35,8 @@ BEGIN
 END;
 $function$;
 
-DROP TRIGGER IF EXISTS zora_media_token_latest_holder_trigger ON public.in_process_transfers;
+DROP TRIGGER if EXISTS zora_media_token_latest_holder_trigger ON public.in_process_transfers;
 
 CREATE TRIGGER zora_media_token_latest_holder_trigger
-AFTER INSERT ON public.in_process_transfers
-FOR EACH ROW
-EXECUTE FUNCTION public.set_zora_media_token_latest_holder_on_insert();
+AFTER INSERT ON public.in_process_transfers FOR EACH ROW
+EXECUTE FUNCTION public.set_zora_media_token_latest_holder_on_insert ();

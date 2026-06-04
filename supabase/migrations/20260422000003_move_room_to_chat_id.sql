@@ -1,40 +1,37 @@
 -- Add chat_id as a plain text column (no FK) to replace the room FK
-alter table "public"."in_process_messages"
-  add column "chat_id" text null default null;
+ALTER TABLE "public"."in_process_messages"
+ADD COLUMN "chat_id" TEXT NULL DEFAULT NULL;
 
 -- Copy existing room values into chat_id
 UPDATE "public"."in_process_messages"
-  SET "chat_id" = "room"
-  WHERE "room" IS NOT NULL;
+SET
+  "chat_id" = "room"
+WHERE
+  "room" IS NOT NULL;
 
 -- Drop FK constraint and room column
-alter table "public"."in_process_messages"
-  drop constraint "in_process_messages_room_fkey";
+ALTER TABLE "public"."in_process_messages"
+DROP CONSTRAINT "in_process_messages_room_fkey";
 
-DROP INDEX IF EXISTS idx_in_process_messages_room;
+DROP INDEX if EXISTS idx_in_process_messages_room;
 
-alter table "public"."in_process_messages"
-  drop column "room";
+ALTER TABLE "public"."in_process_messages"
+DROP COLUMN "room";
 
-CREATE INDEX idx_in_process_messages_chat_id
-  ON public.in_process_messages USING btree (chat_id);
+CREATE INDEX idx_in_process_messages_chat_id ON public.in_process_messages USING btree (chat_id);
 
 -- Recreate get_daily_nudges RPC with chat_id instead of room_id.
 -- DROP first because PostgreSQL disallows changing a function's return type via CREATE OR REPLACE.
-DROP FUNCTION IF EXISTS public.get_daily_nudges(integer, integer);
+DROP FUNCTION if EXISTS public.get_daily_nudges (INTEGER, INTEGER);
 
-CREATE FUNCTION public.get_daily_nudges(
-  p_inactivity_days integer DEFAULT 3,
-  p_recent_assistant_days integer DEFAULT 7
-)
-RETURNS TABLE (
-  artist_address text,
-  chat_id text,
-  days_since_last_moment integer
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE FUNCTION public.get_daily_nudges (
+  p_inactivity_days INTEGER DEFAULT 3,
+  p_recent_assistant_days INTEGER DEFAULT 7
+) returns TABLE (
+  artist_address TEXT,
+  chat_id TEXT,
+  days_since_last_moment INTEGER
+) language sql stable AS $function$
   WITH inactive_artists AS (
     SELECT
       a.address,

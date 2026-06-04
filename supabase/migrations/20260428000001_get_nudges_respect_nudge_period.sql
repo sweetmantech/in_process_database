@@ -1,18 +1,13 @@
 -- get_nudges(): intervals follow account_notifications.nudge_period as stored — e.g. 1 = daily,
 -- 3 = every 3 days, 7 = every 7 days (no artificial floor on make_interval days).
+DROP FUNCTION if EXISTS public.get_nudges ();
 
-DROP FUNCTION IF EXISTS public.get_nudges();
-
-CREATE FUNCTION public.get_nudges()
-RETURNS TABLE (
-  artist_address       text,
-  chat_id              text,
-  days_since_last_moment integer,
-  nudge_period         integer
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE FUNCTION public.get_nudges () returns TABLE (
+  artist_address TEXT,
+  chat_id TEXT,
+  days_since_last_moment INTEGER,
+  nudge_period INTEGER
+) language sql stable AS $function$
   WITH nudge_artists AS (
     SELECT an.artist_address, an.nudge_period
     FROM public.account_notifications an

@@ -1,26 +1,22 @@
 -- get_arweave_uploads: add per-artist SUM(file_size_bytes) and sort by size (aligns sort enum with get_artist_arweave_uploads).
-DROP FUNCTION IF EXISTS public.get_arweave_uploads(text, timestamptz, integer, integer, text, text);
+DROP FUNCTION if EXISTS public.get_arweave_uploads (TEXT, TIMESTAMPTZ, INTEGER, INTEGER, TEXT, TEXT);
 
-CREATE OR REPLACE FUNCTION public.get_arweave_uploads(
-  p_artist     TEXT DEFAULT NULL,
-  p_from       TIMESTAMPTZ DEFAULT NULL,
-  p_limit      INT DEFAULT 20,
-  p_page       INT DEFAULT 1,
-  p_sort_by    TEXT DEFAULT 'usdc_cost',
+CREATE OR REPLACE FUNCTION public.get_arweave_uploads (
+  p_artist TEXT DEFAULT NULL,
+  p_from TIMESTAMPTZ DEFAULT NULL,
+  p_limit INT DEFAULT 20,
+  p_page INT DEFAULT 1,
+  p_sort_by TEXT DEFAULT 'usdc_cost',
   p_sort_order TEXT DEFAULT 'desc'
-)
-RETURNS TABLE (
-  winc_cost       TEXT,
-  usdc_cost       NUMERIC,
+) returns TABLE (
+  winc_cost TEXT,
+  usdc_cost NUMERIC,
   file_size_bytes BIGINT,
   artist_username TEXT,
-  artist_address  TEXT,
-  total_count     BIGINT,
+  artist_address TEXT,
+  total_count BIGINT,
   total_usdc_cost NUMERIC
-)
-LANGUAGE sql
-STABLE
-AS $$
+) language sql stable AS $$
   WITH filtered AS (
     SELECT
       u.artist_address,

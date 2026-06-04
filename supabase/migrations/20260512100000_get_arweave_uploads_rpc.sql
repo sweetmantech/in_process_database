@@ -1,27 +1,23 @@
-CREATE OR REPLACE FUNCTION public.get_arweave_uploads(
-  p_artist     TEXT DEFAULT NULL,
-  p_from       TIMESTAMPTZ DEFAULT NULL,
-  p_limit      INT DEFAULT 20,
-  p_page       INT DEFAULT 1,
-  p_sort_by    TEXT DEFAULT 'created_at',
+CREATE OR REPLACE FUNCTION public.get_arweave_uploads (
+  p_artist TEXT DEFAULT NULL,
+  p_from TIMESTAMPTZ DEFAULT NULL,
+  p_limit INT DEFAULT 20,
+  p_page INT DEFAULT 1,
+  p_sort_by TEXT DEFAULT 'created_at',
   p_sort_order TEXT DEFAULT 'desc'
-)
-RETURNS TABLE (
-  id              UUID,
-  arweave_uri     TEXT,
-  winc_cost       TEXT,
-  usdc_cost       NUMERIC,
+) returns TABLE (
+  id UUID,
+  arweave_uri TEXT,
+  winc_cost TEXT,
+  usdc_cost NUMERIC,
   file_size_bytes BIGINT,
-  content_type    TEXT,
-  created_at      TIMESTAMPTZ,
+  content_type TEXT,
+  created_at TIMESTAMPTZ,
   artist_username TEXT,
-  artist_address  TEXT,
-  total_count     BIGINT,
+  artist_address TEXT,
+  total_count BIGINT,
   total_usdc_cost NUMERIC
-)
-LANGUAGE sql
-STABLE
-AS $$
+) language sql stable AS $$
   SELECT
     u.id,
     u.arweave_uri,

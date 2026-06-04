@@ -1,25 +1,28 @@
-create table "public"."in_process_collectors" (
-    "id" uuid not null default gen_random_uuid(),
-    "collector" text not null,
-    "moment" uuid not null,
-    "amount" numeric not null,
-    "transaction_hash" text not null,
-    "collected_at" timestamp with time zone not null default now()
+CREATE TABLE "public"."in_process_collectors" (
+  "id" UUID NOT NULL DEFAULT GEN_RANDOM_UUID(),
+  "collector" TEXT NOT NULL,
+  "moment" UUID NOT NULL,
+  "amount" NUMERIC NOT NULL,
+  "transaction_hash" TEXT NOT NULL,
+  "collected_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-alter table "public"."in_process_collectors" enable row level security;
+ALTER TABLE "public"."in_process_collectors" enable ROW level security;
 
 CREATE UNIQUE INDEX in_process_collectors_pkey ON public.in_process_collectors USING btree (id);
 
-alter table "public"."in_process_collectors" add constraint "in_process_collectors_pkey" PRIMARY KEY using index "in_process_collectors_pkey";
+ALTER TABLE "public"."in_process_collectors"
+ADD CONSTRAINT "in_process_collectors_pkey" PRIMARY KEY USING index "in_process_collectors_pkey";
 
-alter table "public"."in_process_collectors" add constraint "in_process_collectors_moment_fkey" FOREIGN KEY (moment) REFERENCES public.in_process_moments(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_collectors"
+ADD CONSTRAINT "in_process_collectors_moment_fkey" FOREIGN key (moment) REFERENCES public.in_process_moments (id) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_collectors" validate constraint "in_process_collectors_moment_fkey";
+ALTER TABLE "public"."in_process_collectors" validate CONSTRAINT "in_process_collectors_moment_fkey";
 
-alter table "public"."in_process_collectors" add constraint "in_process_collectors_collector_fkey" FOREIGN KEY (collector) REFERENCES public.in_process_artists(address) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_collectors"
+ADD CONSTRAINT "in_process_collectors_collector_fkey" FOREIGN key (collector) REFERENCES public.in_process_artists (address) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_collectors" validate constraint "in_process_collectors_collector_fkey";
+ALTER TABLE "public"."in_process_collectors" validate CONSTRAINT "in_process_collectors_collector_fkey";
 
 CREATE UNIQUE INDEX in_process_collectors_collector_transaction_moment_idx ON public.in_process_collectors USING btree (collector, transaction_hash, moment);
 

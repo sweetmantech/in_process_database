@@ -1,21 +1,14 @@
 -- Update get_weekly_wrap_up_stats to use account_notifications for the notify_enabled gate.
 -- The qualified_artists CTE now joins account_notifications so only artists who have
 -- explicitly opted in (notify_enabled = true) receive a weekly wrap-up.
-
-CREATE OR REPLACE FUNCTION public.get_weekly_wrap_up_stats(
-  p_days integer DEFAULT 7
-)
-RETURNS TABLE (
-  username       text,
-  chat_id        text,
-  telegram_count integer,
-  web_count      integer,
-  api_count      integer,
-  sms_count      integer
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_weekly_wrap_up_stats (p_days INTEGER DEFAULT 7) returns TABLE (
+  username TEXT,
+  chat_id TEXT,
+  telegram_count INTEGER,
+  web_count INTEGER,
+  api_count INTEGER,
+  sms_count INTEGER
+) language sql stable AS $function$
   -- Artists who opted in to notifications and have both username + telegram_username set.
   -- Start from account_notifications (smaller table) filtered by notify_enabled first,
   -- then join in_process_artists to apply the username/telegram_username conditions.

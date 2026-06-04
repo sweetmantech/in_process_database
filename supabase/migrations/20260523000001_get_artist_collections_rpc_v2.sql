@@ -1,17 +1,15 @@
 -- Renames get_artist_collections → get_collections and extends it to support:
 --   p_addresses : address-based lookup (single or batch, no moments filter)
 -- Also adds creator_username via join with in_process_artists.
-DROP FUNCTION IF EXISTS public.get_artist_collections(text, int, int, int);
-CREATE OR REPLACE FUNCTION public.get_collections(
-  p_artist    text    DEFAULT NULL,
-  p_chainid   int     DEFAULT NULL,
-  p_addresses text[]  DEFAULT NULL,
-  p_limit     int     DEFAULT 20,
-  p_page      int     DEFAULT 1
-)
-RETURNS json
-LANGUAGE plpgsql
-AS $function$
+DROP FUNCTION if EXISTS public.get_artist_collections (TEXT, INT, INT, INT);
+
+CREATE OR REPLACE FUNCTION public.get_collections (
+  p_artist TEXT DEFAULT NULL,
+  p_chainid INT DEFAULT NULL,
+  p_addresses TEXT[] DEFAULT NULL,
+  p_limit INT DEFAULT 20,
+  p_page INT DEFAULT 1
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit    int     := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 20), 100));
   clamped_page    int     := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));

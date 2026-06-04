@@ -1,52 +1,60 @@
-alter table "public"."in_process_moments" drop constraint "in_process_moments_collection_id_fkey";
+ALTER TABLE "public"."in_process_moments"
+DROP CONSTRAINT "in_process_moments_collection_id_fkey";
 
-alter table "public"."in_process_moments" drop constraint "in_process_moments_collection_id_token_id_unique";
+ALTER TABLE "public"."in_process_moments"
+DROP CONSTRAINT "in_process_moments_collection_id_token_id_unique";
 
-drop index if exists "public"."in_process_moments_collection_id_token_id_unique";
+DROP INDEX if EXISTS "public"."in_process_moments_collection_id_token_id_unique";
 
-alter table "public"."in_process_moments" drop column "collection_id";
+ALTER TABLE "public"."in_process_moments"
+DROP COLUMN "collection_id";
 
-alter table "public"."in_process_moments" add column "collection" uuid not null;
+ALTER TABLE "public"."in_process_moments"
+ADD COLUMN "collection" UUID NOT NULL;
 
-alter table "public"."in_process_moments" add constraint "in_process_moments_collection_fkey" FOREIGN KEY (collection) REFERENCES public.in_process_collections(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_moments"
+ADD CONSTRAINT "in_process_moments_collection_fkey" FOREIGN key (collection) REFERENCES public.in_process_collections (id) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_moments" validate constraint "in_process_moments_collection_fkey";
+ALTER TABLE "public"."in_process_moments" validate CONSTRAINT "in_process_moments_collection_fkey";
 
 CREATE UNIQUE INDEX in_process_moments_collection_token_id_unique ON public.in_process_moments USING btree (collection, token_id);
 
-alter table "public"."in_process_moments" add constraint "in_process_moments_collection_token_id_unique" UNIQUE using index "in_process_moments_collection_token_id_unique";
+ALTER TABLE "public"."in_process_moments"
+ADD CONSTRAINT "in_process_moments_collection_token_id_unique" UNIQUE USING index "in_process_moments_collection_token_id_unique";
 
-create table "public"."in_process_sales" (
-    "id" uuid not null default gen_random_uuid(),
-    "token" uuid not null,
-    "sale_start" numeric not null,
-    "sale_end" numeric not null,
-    "max_tokens_per_address" numeric not null,
-    "price_per_token" numeric not null,
-    "funds_recipient" text not null,
-    "currency" text not null
+CREATE TABLE "public"."in_process_sales" (
+  "id" UUID NOT NULL DEFAULT GEN_RANDOM_UUID(),
+  "token" UUID NOT NULL,
+  "sale_start" NUMERIC NOT NULL,
+  "sale_end" NUMERIC NOT NULL,
+  "max_tokens_per_address" NUMERIC NOT NULL,
+  "price_per_token" NUMERIC NOT NULL,
+  "funds_recipient" TEXT NOT NULL,
+  "currency" TEXT NOT NULL
 );
 
-alter table "public"."in_process_sales" enable row level security;
+ALTER TABLE "public"."in_process_sales" enable ROW level security;
 
-alter table "public"."in_process_sales" add constraint "chk_in_process_sales_sale_range" 
-    check (sale_end >= sale_start);
+ALTER TABLE "public"."in_process_sales"
+ADD CONSTRAINT "chk_in_process_sales_sale_range" CHECK (sale_end >= sale_start);
 
 CREATE UNIQUE INDEX in_process_sales_pkey ON public.in_process_sales USING btree (id);
 
-alter table "public"."in_process_sales" add constraint "in_process_sales_pkey" PRIMARY KEY using index "in_process_sales_pkey";
+ALTER TABLE "public"."in_process_sales"
+ADD CONSTRAINT "in_process_sales_pkey" PRIMARY KEY USING index "in_process_sales_pkey";
 
-alter table "public"."in_process_sales" add constraint "in_process_sales_token_fkey" FOREIGN KEY (token) REFERENCES public.in_process_tokens(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_sales"
+ADD CONSTRAINT "in_process_sales_token_fkey" FOREIGN key (token) REFERENCES public.in_process_tokens (id) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_sales" validate constraint "in_process_sales_token_fkey";
+ALTER TABLE "public"."in_process_sales" validate CONSTRAINT "in_process_sales_token_fkey";
 
 CREATE UNIQUE INDEX in_process_sales_token_unique ON public.in_process_sales USING btree (token);
 
-alter table "public"."in_process_sales" add constraint "in_process_sales_token_unique" UNIQUE using index "in_process_sales_token_unique";
+ALTER TABLE "public"."in_process_sales"
+ADD CONSTRAINT "in_process_sales_token_unique" UNIQUE USING index "in_process_sales_token_unique";
 
 -- Create trigger function to convert funds_recipient and currency to lowercase
-create or replace function "public"."lowercase_in_process_sales_fields"()
-returns trigger as $$
+CREATE OR REPLACE FUNCTION "public"."lowercase_in_process_sales_fields" () returns trigger AS $$
 begin
     new.funds_recipient := lower(new.funds_recipient);
     new.currency := lower(new.currency);
@@ -55,7 +63,6 @@ end;
 $$ language plpgsql;
 
 -- Create trigger to automatically lowercase funds_recipient and currency on insert/update
-create trigger "trg_lowercase_in_process_sales_fields"
-    before insert or update on "public"."in_process_sales"
-    for each row
-    execute function "public"."lowercase_in_process_sales_fields"();
+CREATE TRIGGER "trg_lowercase_in_process_sales_fields"
+BEFORE INSERT OR UPDATE ON "public"."in_process_sales" FOR EACH ROW
+EXECUTE FUNCTION "public"."lowercase_in_process_sales_fields" ();

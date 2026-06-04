@@ -1,16 +1,21 @@
-with duplicated_rows as (
-  select
-    ctid,
-    row_number() over (
-      partition by artist_address, commented_at, moment
-      order by id
-    ) as row_num
-  from public.in_process_moment_comments
-)
-delete from public.in_process_moment_comments comments
-using duplicated_rows
-where comments.ctid = duplicated_rows.ctid
-  and duplicated_rows.row_num > 1;
+WITH
+  duplicated_rows AS (
+    SELECT
+      ctid,
+      ROW_NUMBER() OVER (
+        PARTITION BY
+          artist_address,
+          commented_at,
+          moment
+        ORDER BY
+          id
+      ) AS row_num
+    FROM
+      public.in_process_moment_comments
+  )
+DELETE FROM public.in_process_moment_comments comments USING duplicated_rows
+WHERE
+  comments.ctid = duplicated_rows.ctid
+  AND duplicated_rows.row_num > 1;
 
-create unique index if not exists in_process_moment_comments_artist_commented_at_moment_unique_idx
-  on public.in_process_moment_comments using btree (artist_address, commented_at, moment);
+CREATE UNIQUE INDEX if NOT EXISTS in_process_moment_comments_artist_commented_at_moment_unique_idx ON public.in_process_moment_comments USING btree (artist_address, commented_at, moment);

@@ -1,1 +1,1 @@
-drop table if exists "public"."in_process_airdrops" cascade;
+DROP TABLE IF EXISTS "public"."in_process_airdrops" cascade;

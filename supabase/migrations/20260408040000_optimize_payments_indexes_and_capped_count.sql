@@ -4,38 +4,30 @@
 --    the data query, replacing COUNT(*) OVER() which forced a full-table
 --    scan through all 5 JOINs before returning any data.
 -- 3. Skip metadata JOIN in the count query when no mime filter is active.
-
 -- Index on ORDER BY column — lets the data query use an index scan and
 -- return the first LIMIT rows without touching the rest of the table.
-CREATE INDEX IF NOT EXISTS idx_payments_transferred_at_desc
-  ON public.in_process_payments USING btree (transferred_at DESC);
+CREATE INDEX if NOT EXISTS idx_payments_transferred_at_desc ON public.in_process_payments USING btree (transferred_at DESC);
 
 -- Index on the FK join column (PostgreSQL does NOT create FK indexes automatically).
-CREATE INDEX IF NOT EXISTS idx_payments_moment
-  ON public.in_process_payments USING btree (moment);
+CREATE INDEX if NOT EXISTS idx_payments_moment ON public.in_process_payments USING btree (moment);
 
 -- Index for collector filter (p.buyer = ANY(p_collectors))
-CREATE INDEX IF NOT EXISTS idx_payments_buyer
-  ON public.in_process_payments USING btree (buyer);
+CREATE INDEX if NOT EXISTS idx_payments_buyer ON public.in_process_payments USING btree (buyer);
 
 -- Index for artist filter (c.creator = ANY(p_artists))
-CREATE INDEX IF NOT EXISTS idx_collections_creator
-  ON public.in_process_collections USING btree (creator);
+CREATE INDEX if NOT EXISTS idx_collections_creator ON public.in_process_collections USING btree (creator);
 
 -- Rewrite RPC ------------------------------------------------------------
-DROP FUNCTION IF EXISTS public.get_in_process_payments(integer, integer, text[], text[], numeric, text);
+DROP FUNCTION if EXISTS public.get_in_process_payments (INTEGER, INTEGER, TEXT[], TEXT[], NUMERIC, TEXT);
 
-CREATE OR REPLACE FUNCTION public.get_in_process_payments(
-  p_limit    integer DEFAULT 20,
-  p_page     integer DEFAULT 1,
-  p_artists  text[]  DEFAULT NULL,
-  p_collectors text[] DEFAULT NULL,
-  p_chainid  numeric DEFAULT 8453,
-  p_mime     text    DEFAULT NULL
-)
-RETURNS json
-LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_in_process_payments (
+  p_limit INTEGER DEFAULT 20,
+  p_page INTEGER DEFAULT 1,
+  p_artists TEXT[] DEFAULT NULL,
+  p_collectors TEXT[] DEFAULT NULL,
+  p_chainid NUMERIC DEFAULT 8453,
+  p_mime TEXT DEFAULT NULL
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit  int  := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 20), 100));
   clamped_page  int  := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));

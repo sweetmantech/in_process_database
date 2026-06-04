@@ -1,28 +1,23 @@
 -- get_artist_arweave_uploads: explicit created_at sort (and stable ORDER BY matching get_arweave_uploads style).
+DROP FUNCTION if EXISTS public.get_artist_arweave_uploads (TEXT, TIMESTAMPTZ, INTEGER, INTEGER, TEXT, TEXT);
 
-DROP FUNCTION IF EXISTS public.get_artist_arweave_uploads(text, timestamptz, integer, integer, text, text);
-
-CREATE OR REPLACE FUNCTION public.get_artist_arweave_uploads(
-  p_artist     TEXT DEFAULT NULL,
-  p_from       TIMESTAMPTZ DEFAULT NULL,
-  p_limit      INT DEFAULT 20,
-  p_page       INT DEFAULT 1,
-  p_sort_by    TEXT DEFAULT 'created_at',
+CREATE OR REPLACE FUNCTION public.get_artist_arweave_uploads (
+  p_artist TEXT DEFAULT NULL,
+  p_from TIMESTAMPTZ DEFAULT NULL,
+  p_limit INT DEFAULT 20,
+  p_page INT DEFAULT 1,
+  p_sort_by TEXT DEFAULT 'created_at',
   p_sort_order TEXT DEFAULT 'desc'
-)
-RETURNS TABLE (
-  id              UUID,
-  arweave_uri     TEXT,
-  winc_cost       TEXT,
-  usdc_cost       NUMERIC,
+) returns TABLE (
+  id UUID,
+  arweave_uri TEXT,
+  winc_cost TEXT,
+  usdc_cost NUMERIC,
   file_size_bytes BIGINT,
-  content_type    TEXT,
-  created_at      TIMESTAMPTZ,
-  total_count     BIGINT
-)
-LANGUAGE sql
-STABLE
-AS $$
+  content_type TEXT,
+  created_at TIMESTAMPTZ,
+  total_count BIGINT
+) language sql stable AS $$
   SELECT
     u.id,
     u.arweave_uri,

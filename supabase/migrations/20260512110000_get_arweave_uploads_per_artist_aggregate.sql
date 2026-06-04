@@ -1,26 +1,22 @@
 -- Replace get_arweave_uploads: per-artist winc + USDC totals; sort by usdc_cost | winc_cost only.
 -- DROP required: return type changed from per-upload rows to per-artist aggregates.
-DROP FUNCTION IF EXISTS public.get_arweave_uploads(text, timestamptz, integer, integer, text, text);
+DROP FUNCTION if EXISTS public.get_arweave_uploads (TEXT, TIMESTAMPTZ, INTEGER, INTEGER, TEXT, TEXT);
 
-CREATE OR REPLACE FUNCTION public.get_arweave_uploads(
-  p_artist     TEXT DEFAULT NULL,
-  p_from       TIMESTAMPTZ DEFAULT NULL,
-  p_limit      INT DEFAULT 20,
-  p_page       INT DEFAULT 1,
-  p_sort_by    TEXT DEFAULT 'usdc_cost',
+CREATE OR REPLACE FUNCTION public.get_arweave_uploads (
+  p_artist TEXT DEFAULT NULL,
+  p_from TIMESTAMPTZ DEFAULT NULL,
+  p_limit INT DEFAULT 20,
+  p_page INT DEFAULT 1,
+  p_sort_by TEXT DEFAULT 'usdc_cost',
   p_sort_order TEXT DEFAULT 'desc'
-)
-RETURNS TABLE (
-  winc_cost       TEXT,
-  usdc_cost       NUMERIC,
+) returns TABLE (
+  winc_cost TEXT,
+  usdc_cost NUMERIC,
   artist_username TEXT,
-  artist_address  TEXT,
-  total_count     BIGINT,
+  artist_address TEXT,
+  total_count BIGINT,
   total_usdc_cost NUMERIC
-)
-LANGUAGE sql
-STABLE
-AS $$
+) language sql stable AS $$
   WITH filtered AS (
     SELECT
       u.artist_address,

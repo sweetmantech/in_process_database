@@ -1,27 +1,30 @@
-create table "public"."in_process_metadata" (
-  "id" uuid not null default gen_random_uuid(),
-  "moment" uuid not null,
-  "name" text,
-  "description" text,
-  "external_url" text,
-  "image" text,
-  "animation_url" text,
-  "content" jsonb,
-  "created_at" timestamp with time zone not null default now()
+CREATE TABLE "public"."in_process_metadata" (
+  "id" UUID NOT NULL DEFAULT GEN_RANDOM_UUID(),
+  "moment" UUID NOT NULL,
+  "name" TEXT,
+  "description" TEXT,
+  "external_url" TEXT,
+  "image" TEXT,
+  "animation_url" TEXT,
+  "content" JSONB,
+  "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-alter table "public"."in_process_metadata" enable row level security;
+ALTER TABLE "public"."in_process_metadata" enable ROW level security;
 
 CREATE UNIQUE INDEX in_process_metadata_pkey ON public.in_process_metadata USING btree (id);
 
-alter table "public"."in_process_metadata" add constraint "in_process_metadata_pkey" PRIMARY KEY using index "in_process_metadata_pkey";
+ALTER TABLE "public"."in_process_metadata"
+ADD CONSTRAINT "in_process_metadata_pkey" PRIMARY KEY USING index "in_process_metadata_pkey";
 
-alter table "public"."in_process_metadata" add constraint "in_process_metadata_moment_fkey" FOREIGN KEY (moment) REFERENCES public.in_process_moments(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_metadata"
+ADD CONSTRAINT "in_process_metadata_moment_fkey" FOREIGN key (moment) REFERENCES public.in_process_moments (id) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_metadata" validate constraint "in_process_metadata_moment_fkey";
+ALTER TABLE "public"."in_process_metadata" validate CONSTRAINT "in_process_metadata_moment_fkey";
 
 CREATE UNIQUE INDEX in_process_metadata_moment_unique ON public.in_process_metadata USING btree (moment);
 
-alter table "public"."in_process_metadata" add constraint "in_process_metadata_moment_unique" UNIQUE using index "in_process_metadata_moment_unique";
+ALTER TABLE "public"."in_process_metadata"
+ADD CONSTRAINT "in_process_metadata_moment_unique" UNIQUE USING index "in_process_metadata_moment_unique";
 
-CREATE INDEX in_process_metadata_content_mime_idx ON public.in_process_metadata USING btree ((content->>'mime'));
+CREATE INDEX in_process_metadata_content_mime_idx ON public.in_process_metadata USING btree ((content - > > 'mime'));

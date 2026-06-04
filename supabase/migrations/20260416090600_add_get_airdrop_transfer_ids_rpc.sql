@@ -1,20 +1,13 @@
-DROP FUNCTION IF EXISTS public.get_airdrop_transfers(text, text, numeric, text, integer, integer);
+DROP FUNCTION if EXISTS public.get_airdrop_transfers (TEXT, TEXT, NUMERIC, TEXT, INTEGER, INTEGER);
 
-CREATE OR REPLACE FUNCTION public.get_airdrop_transfers(
-  p_artist text DEFAULT NULL,
-  p_collector text DEFAULT NULL,
-  p_chain_id numeric DEFAULT NULL,
-  p_content_type text DEFAULT NULL,
-  p_limit integer DEFAULT 20,
-  p_offset integer DEFAULT 0
-)
-RETURNS TABLE (
-  transfers jsonb,
-  total_count bigint
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_airdrop_transfers (
+  p_artist TEXT DEFAULT NULL,
+  p_collector TEXT DEFAULT NULL,
+  p_chain_id NUMERIC DEFAULT NULL,
+  p_content_type TEXT DEFAULT NULL,
+  p_limit INTEGER DEFAULT 20,
+  p_offset INTEGER DEFAULT 0
+) returns TABLE (transfers JSONB, total_count BIGINT) language sql stable AS $function$
   WITH filtered_collections AS (
     SELECT c.id
     FROM public.in_process_collections c

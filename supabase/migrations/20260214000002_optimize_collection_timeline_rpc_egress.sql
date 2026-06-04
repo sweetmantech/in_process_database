@@ -1,15 +1,12 @@
 -- Optimize get_collection_timeline: remove unused fields (max_supply, updated_at, admin username)
 -- and drop unnecessary JOIN to in_process_artists in admin_data CTE
-CREATE OR REPLACE FUNCTION public.get_collection_timeline(
-  p_collection text,
-  p_limit integer DEFAULT 100,
-  p_page integer DEFAULT 1,
-  p_chainid numeric DEFAULT 8453,
-  p_hidden boolean DEFAULT false
-)
- RETURNS json
- LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_collection_timeline (
+  p_collection TEXT,
+  p_limit INTEGER DEFAULT 100,
+  p_page INTEGER DEFAULT 1,
+  p_chainid NUMERIC DEFAULT 8453,
+  p_hidden BOOLEAN DEFAULT FALSE
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit int := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 100), 1000));
   clamped_page int := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));
@@ -154,5 +151,4 @@ BEGIN
     )
   );
 END;
-$function$
-;
+$function$;
