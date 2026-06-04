@@ -27,4 +27,5 @@ CREATE UNIQUE INDEX in_process_metadata_moment_unique ON public.in_process_metad
 ALTER TABLE "public"."in_process_metadata"
 ADD CONSTRAINT "in_process_metadata_moment_unique" UNIQUE USING index "in_process_metadata_moment_unique";
 
-CREATE INDEX in_process_metadata_content_mime_idx ON public.in_process_metadata USING btree ((content - > > 'mime'));
+-- prettier-ignore
+CREATE INDEX in_process_metadata_content_mime_idx ON public.in_process_metadata USING btree ((content ->> 'mime'));
