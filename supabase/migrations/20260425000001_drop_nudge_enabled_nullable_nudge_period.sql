@@ -1,33 +1,32 @@
 -- nudge_period being NULL now means nudge is disabled; non-NULL means enabled.
 -- Drop nudge_enabled and make nudge_period nullable.
-
 -- 1. Allow NULL in nudge_period.
 ALTER TABLE public.account_notifications
-  ALTER COLUMN nudge_period DROP NOT NULL,
-  ALTER COLUMN nudge_period DROP DEFAULT;
+ALTER COLUMN nudge_period
+DROP NOT NULL,
+ALTER COLUMN nudge_period
+DROP DEFAULT;
 
 -- 2. Disable nudge for rows that had nudge_enabled = false.
 UPDATE public.account_notifications
-  SET nudge_period = NULL
-  WHERE nudge_enabled = false;
+SET
+  nudge_period = NULL
+WHERE
+  nudge_enabled = FALSE;
 
 -- 3. Remove the now-redundant nudge_enabled column.
 ALTER TABLE public.account_notifications
-  DROP COLUMN nudge_enabled;
+DROP COLUMN nudge_enabled;
 
 -- 4. Recreate get_nudges() using nudge_period IS NOT NULL instead of nudge_enabled = true.
-DROP FUNCTION IF EXISTS public.get_nudges();
+DROP FUNCTION if EXISTS public.get_nudges ();
 
-CREATE FUNCTION public.get_nudges()
-RETURNS TABLE (
-  artist_address       text,
-  chat_id              text,
-  days_since_last_moment integer,
-  nudge_period         integer
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE FUNCTION public.get_nudges () returns TABLE (
+  artist_address TEXT,
+  chat_id TEXT,
+  days_since_last_moment INTEGER,
+  nudge_period INTEGER
+) language sql stable AS $function$
   WITH nudge_artists AS (
     SELECT an.artist_address, an.nudge_period
     FROM public.account_notifications an

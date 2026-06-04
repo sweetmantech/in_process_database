@@ -1,22 +1,18 @@
 -- build_moment_json: assemble the standard moment JSON object returned by all timeline functions
-CREATE OR REPLACE FUNCTION public.build_moment_json(
-  p_address          text,
-  p_token_id         numeric,
-  p_chain_id         numeric,
-  p_protocol         text,
-  p_id               uuid,
-  p_uri              text,
-  p_creator          text,
-  p_creator_username text,
-  p_creator_hidden   boolean,
-  p_collection       uuid,
-  p_metadata         json,
-  p_created_at       timestamptz
-)
-RETURNS json
-LANGUAGE sql
-STABLE
-AS $$
+CREATE OR REPLACE FUNCTION public.build_moment_json (
+  p_address TEXT,
+  p_token_id NUMERIC,
+  p_chain_id NUMERIC,
+  p_protocol TEXT,
+  p_id UUID,
+  p_uri TEXT,
+  p_creator TEXT,
+  p_creator_username TEXT,
+  p_creator_hidden BOOLEAN,
+  p_collection UUID,
+  p_metadata JSON,
+  p_created_at TIMESTAMPTZ
+) returns JSON language sql stable AS $$
   SELECT json_build_object(
     'address',    p_address,
     'token_id',   p_token_id::text,
@@ -32,16 +28,12 @@ AS $$
 $$;
 
 -- build_timeline_result: assemble the standard paginated timeline response
-CREATE OR REPLACE FUNCTION public.build_timeline_result(
-  p_moments      json,
-  p_total_count  int,
-  p_capped_limit int,
-  p_clamped_page int
-)
-RETURNS json
-LANGUAGE sql
-IMMUTABLE
-AS $$
+CREATE OR REPLACE FUNCTION public.build_timeline_result (
+  p_moments JSON,
+  p_total_count INT,
+  p_capped_limit INT,
+  p_clamped_page INT
+) returns JSON language sql immutable AS $$
   SELECT json_build_object(
     'moments',    COALESCE(p_moments, '[]'::json),
     'pagination', json_build_object(

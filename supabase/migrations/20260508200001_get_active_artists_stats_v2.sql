@@ -1,23 +1,19 @@
-CREATE OR REPLACE FUNCTION public.get_active_artists_stats(
+CREATE OR REPLACE FUNCTION public.get_active_artists_stats (
   p_period TEXT DEFAULT 'all',
-  p_limit  INT  DEFAULT 20,
-  p_page   INT  DEFAULT 1,
+  p_limit INT DEFAULT 20,
+  p_page INT DEFAULT 1,
   p_artist TEXT DEFAULT NULL
-)
-RETURNS TABLE (
-  address         TEXT,
-  username        TEXT,
+) returns TABLE (
+  address TEXT,
+  username TEXT,
   moments_created BIGINT,
-  airdropped      BIGINT,
-  telegram_count  BIGINT,
-  web_count       BIGINT,
-  api_count       BIGINT,
-  sms_count       BIGINT,
-  total_count     BIGINT
-)
-LANGUAGE sql
-STABLE
-AS $$
+  airdropped BIGINT,
+  telegram_count BIGINT,
+  web_count BIGINT,
+  api_count BIGINT,
+  sms_count BIGINT,
+  total_count BIGINT
+) language sql stable AS $$
   WITH artist_moments AS MATERIALIZED (
     SELECT
       c.creator AS artist_address,

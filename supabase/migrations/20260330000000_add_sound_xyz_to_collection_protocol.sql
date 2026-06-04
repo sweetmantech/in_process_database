@@ -1,1 +1,2 @@
-alter type "public"."collection_protocol" add value 'sound.xyz';
+ALTER TYPE "public"."collection_protocol"
+ADD value 'sound.xyz';

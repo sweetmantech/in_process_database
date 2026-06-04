@@ -1,97 +1,103 @@
 -- Replace artist_id with wallet (primary wallet address) in both notification
 -- tables. Primary wallet priority: external > privy > first available.
-
 -- ===========================================================================
 -- in_process_notifications
 -- ===========================================================================
-
 ALTER TABLE public.in_process_notifications
-  ADD COLUMN IF NOT EXISTS wallet text;
+ADD COLUMN IF NOT EXISTS wallet TEXT;
 
 UPDATE public.in_process_notifications n
-SET wallet = (
-  SELECT address
-  FROM public.in_process_wallets w
-  WHERE w.artist = n.artist_id
-  ORDER BY
-    CASE w.type
-      WHEN 'external' THEN 1
-      WHEN 'privy'    THEN 2
-      ELSE 3
-    END
-  LIMIT 1
-);
+SET
+  wallet = (
+    SELECT
+      address
+    FROM
+      public.in_process_wallets w
+    WHERE
+      w.artist = n.artist_id
+    ORDER BY
+      CASE w.type
+        WHEN 'external' THEN 1
+        WHEN 'privy' THEN 2
+        ELSE 3
+      END
+    LIMIT
+      1
+  );
 
-DELETE FROM public.in_process_notifications WHERE wallet IS NULL;
-
-ALTER TABLE public.in_process_notifications
-  ALTER COLUMN wallet SET NOT NULL;
-
-ALTER TABLE public.in_process_notifications
-  DROP CONSTRAINT IF EXISTS in_process_notifications_artist_id_fkey;
-
-ALTER TABLE public.in_process_notifications
-  DROP COLUMN artist_id;
+DELETE FROM public.in_process_notifications
+WHERE
+  wallet IS NULL;
 
 ALTER TABLE public.in_process_notifications
-  ADD CONSTRAINT in_process_notifications_wallet_fkey
-    FOREIGN KEY (wallet) REFERENCES public.in_process_wallets(address)
-    ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER COLUMN wallet
+SET NOT NULL;
+
+ALTER TABLE public.in_process_notifications
+DROP CONSTRAINT if EXISTS in_process_notifications_artist_id_fkey;
+
+ALTER TABLE public.in_process_notifications
+DROP COLUMN artist_id;
+
+ALTER TABLE public.in_process_notifications
+ADD CONSTRAINT in_process_notifications_wallet_fkey FOREIGN key (wallet) REFERENCES public.in_process_wallets (address) ON UPDATE CASCADE ON DELETE CASCADE;
 
 -- ===========================================================================
 -- account_notifications
 -- ===========================================================================
-
 ALTER TABLE public.account_notifications
-  ADD COLUMN IF NOT EXISTS wallet text;
+ADD COLUMN IF NOT EXISTS wallet TEXT;
 
 UPDATE public.account_notifications an
-SET wallet = (
-  SELECT address
-  FROM public.in_process_wallets w
-  WHERE w.artist = an.artist_id
-  ORDER BY
-    CASE w.type
-      WHEN 'external' THEN 1
-      WHEN 'privy'    THEN 2
-      ELSE 3
-    END
-  LIMIT 1
-);
+SET
+  wallet = (
+    SELECT
+      address
+    FROM
+      public.in_process_wallets w
+    WHERE
+      w.artist = an.artist_id
+    ORDER BY
+      CASE w.type
+        WHEN 'external' THEN 1
+        WHEN 'privy' THEN 2
+        ELSE 3
+      END
+    LIMIT
+      1
+  );
 
-DELETE FROM public.account_notifications WHERE wallet IS NULL;
-
-ALTER TABLE public.account_notifications
-  ALTER COLUMN wallet SET NOT NULL;
-
-ALTER TABLE public.account_notifications
-  DROP CONSTRAINT account_notifications_pkey;
-
-ALTER TABLE public.account_notifications
-  ADD PRIMARY KEY (wallet);
+DELETE FROM public.account_notifications
+WHERE
+  wallet IS NULL;
 
 ALTER TABLE public.account_notifications
-  DROP CONSTRAINT IF EXISTS account_notifications_artist_id_fkey;
+ALTER COLUMN wallet
+SET NOT NULL;
 
 ALTER TABLE public.account_notifications
-  DROP COLUMN artist_id;
+DROP CONSTRAINT account_notifications_pkey;
+
+ALTER TABLE public.account_notifications
+ADD PRIMARY KEY (wallet);
+
+ALTER TABLE public.account_notifications
+DROP CONSTRAINT if EXISTS account_notifications_artist_id_fkey;
+
+ALTER TABLE public.account_notifications
+DROP COLUMN artist_id;
 
 -- ===========================================================================
 -- get_nudges: artist_id → wallet
 -- ===========================================================================
+DROP FUNCTION if EXISTS public.get_nudges ();
 
-DROP FUNCTION IF EXISTS public.get_nudges();
-
-CREATE FUNCTION public.get_nudges()
-RETURNS TABLE (
-  wallet                 text,
-  chat_id                text,
-  days_since_last_moment integer,
-  nudge_period           integer
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE FUNCTION public.get_nudges () returns TABLE (
+  wallet TEXT,
+  chat_id TEXT,
+  days_since_last_moment INTEGER,
+  nudge_period INTEGER
+) language sql stable AS $function$
   -- Step 1: find the primary wallet per artist across ALL wallets (not just
   -- those with notifications), using the same priority as getPrimaryWallet().
   WITH artist_primary_wallet AS (
@@ -149,21 +155,14 @@ $function$;
 -- ===========================================================================
 -- get_weekly_wrap_up_stats: artist_id → wallet
 -- ===========================================================================
-
-CREATE OR REPLACE FUNCTION public.get_weekly_wrap_up_stats(
-  p_days integer DEFAULT 7
-)
-RETURNS TABLE (
-  username       text,
-  chat_id        text,
-  telegram_count integer,
-  web_count      integer,
-  api_count      integer,
-  sms_count      integer
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_weekly_wrap_up_stats (p_days INTEGER DEFAULT 7) returns TABLE (
+  username TEXT,
+  chat_id TEXT,
+  telegram_count INTEGER,
+  web_count INTEGER,
+  api_count INTEGER,
+  sms_count INTEGER
+) language sql stable AS $function$
   WITH qualified_notifications AS (
     SELECT
       an.wallet,

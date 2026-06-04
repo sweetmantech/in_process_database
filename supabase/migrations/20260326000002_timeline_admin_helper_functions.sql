@@ -1,14 +1,10 @@
 -- get_creator_hidden: resolve a token's hidden flag for a given artist from in_process_admins
 -- token-specific entry takes priority over collection-level (token_id = 0)
-CREATE OR REPLACE FUNCTION public.get_creator_hidden(
-  p_collection     uuid,
-  p_token_id       numeric,
-  p_artist_address text
-)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-AS $$
+CREATE OR REPLACE FUNCTION public.get_creator_hidden (
+  p_collection UUID,
+  p_token_id NUMERIC,
+  p_artist_address TEXT
+) returns BOOLEAN language sql stable AS $$
   SELECT COALESCE(
     (SELECT hidden
      FROM in_process_admins
@@ -22,14 +18,7 @@ AS $$
 $$;
 
 -- get_moment_admins_json: return the full admin list for a moment as a JSON array
-CREATE OR REPLACE FUNCTION public.get_moment_admins_json(
-  p_collection uuid,
-  p_token_id   numeric
-)
-RETURNS json
-LANGUAGE sql
-STABLE
-AS $$
+CREATE OR REPLACE FUNCTION public.get_moment_admins_json (p_collection UUID, p_token_id NUMERIC) returns JSON language sql stable AS $$
   SELECT json_agg(
     json_build_object('address', adm.artist_address, 'hidden', adm.hidden)
     ORDER BY adm.granted_at ASC
@@ -49,15 +38,11 @@ AS $$
 $$;
 
 -- moment_is_visible: true when p_hidden=true (admin override) or no admin has hidden this moment
-CREATE OR REPLACE FUNCTION public.moment_is_visible(
-  p_collection uuid,
-  p_token_id   numeric,
-  p_hidden     boolean
-)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-AS $$
+CREATE OR REPLACE FUNCTION public.moment_is_visible (
+  p_collection UUID,
+  p_token_id NUMERIC,
+  p_hidden BOOLEAN
+) returns BOOLEAN language sql stable AS $$
   SELECT
     p_hidden = true
     OR NOT EXISTS (

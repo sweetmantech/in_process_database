@@ -1,16 +1,18 @@
-alter table "public"."in_process_airdrops" drop constraint "in_process_airdrops_artist_address_fkey";
+ALTER TABLE "public"."in_process_airdrops"
+DROP CONSTRAINT "in_process_airdrops_artist_address_fkey";
 
-drop index if exists "public"."in_process_airdrops_moment_artist_address_idx";
+DROP INDEX if EXISTS "public"."in_process_airdrops_moment_artist_address_idx";
 
-alter table "public"."in_process_airdrops" drop column "artist_address";
+ALTER TABLE "public"."in_process_airdrops"
+DROP COLUMN "artist_address";
 
-alter table "public"."in_process_airdrops" add column "recipient" text not null;
+ALTER TABLE "public"."in_process_airdrops"
+ADD COLUMN "recipient" TEXT NOT NULL;
 
-alter table "public"."in_process_airdrops" add constraint "in_process_airdrops_recipient_fkey" FOREIGN KEY (recipient) REFERENCES public.in_process_artists(address) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_airdrops"
+ADD CONSTRAINT "in_process_airdrops_recipient_fkey" FOREIGN key (recipient) REFERENCES public.in_process_artists (address) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_airdrops" validate constraint "in_process_airdrops_recipient_fkey";
+ALTER TABLE "public"."in_process_airdrops" validate CONSTRAINT "in_process_airdrops_recipient_fkey";
 
-alter table "public"."in_process_airdrops" 
-  add constraint "in_process_airdrops_moment_recipient_unique" 
-  unique (moment, recipient);
-
+ALTER TABLE "public"."in_process_airdrops"
+ADD CONSTRAINT "in_process_airdrops_moment_recipient_unique" UNIQUE (moment, recipient);

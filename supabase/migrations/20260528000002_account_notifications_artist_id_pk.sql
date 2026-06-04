@@ -1,24 +1,29 @@
 -- Migrate account_notifications from wallet-address PK to artist UUID PK.
 -- After this migration, notification settings are per-artist-account, not per-wallet.
-
 -- ---------------------------------------------------------------------------
 -- 1. Add artist_id column (nullable first so we can populate it)
 -- ---------------------------------------------------------------------------
 ALTER TABLE public.account_notifications
-  ADD COLUMN IF NOT EXISTS artist_id uuid;
+ADD COLUMN IF NOT EXISTS artist_id UUID;
 
 -- ---------------------------------------------------------------------------
 -- 2. Populate artist_id from in_process_wallets
 -- ---------------------------------------------------------------------------
 UPDATE public.account_notifications an
-SET artist_id = w.artist
-FROM public.in_process_wallets w
-WHERE w.address = an.artist_address AND w.artist IS NOT NULL;
+SET
+  artist_id = w.artist
+FROM
+  public.in_process_wallets w
+WHERE
+  w.address = an.artist_address
+  AND w.artist IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
 -- 3. Remove rows with no matching artist (orphaned wallet addresses)
 -- ---------------------------------------------------------------------------
-DELETE FROM public.account_notifications WHERE artist_id IS NULL;
+DELETE FROM public.account_notifications
+WHERE
+  artist_id IS NULL;
 
 -- ---------------------------------------------------------------------------
 -- 4. Deduplicate: for artists that appear under multiple wallet addresses,
@@ -26,64 +31,62 @@ DELETE FROM public.account_notifications WHERE artist_id IS NULL;
 --    nudge_period set, then telegram_chat_id set).
 -- ---------------------------------------------------------------------------
 DELETE FROM public.account_notifications an
-WHERE an.artist_address NOT IN (
-  SELECT DISTINCT ON (artist_id) artist_address
-  FROM public.account_notifications
-  ORDER BY
-    artist_id,
-    notify_enabled DESC,
-    (nudge_period IS NOT NULL) DESC,
-    (telegram_chat_id IS NOT NULL) DESC
-);
+WHERE
+  an.artist_address NOT IN (
+    SELECT DISTINCT
+      ON (artist_id) artist_address
+    FROM
+      public.account_notifications
+    ORDER BY
+      artist_id,
+      notify_enabled DESC,
+      (nudge_period IS NOT NULL) DESC,
+      (telegram_chat_id IS NOT NULL) DESC
+  );
 
 -- ---------------------------------------------------------------------------
 -- 5. Set NOT NULL on artist_id now that every row has one
 -- ---------------------------------------------------------------------------
 ALTER TABLE public.account_notifications
-  ALTER COLUMN artist_id SET NOT NULL;
+ALTER COLUMN artist_id
+SET NOT NULL;
 
 -- ---------------------------------------------------------------------------
 -- 6. Swap primary key: drop address PK, add artist_id PK
 -- ---------------------------------------------------------------------------
 ALTER TABLE public.account_notifications
-  DROP CONSTRAINT account_notifications_pkey;
+DROP CONSTRAINT account_notifications_pkey;
 
 ALTER TABLE public.account_notifications
-  ADD PRIMARY KEY (artist_id);
+ADD PRIMARY KEY (artist_id);
 
 -- ---------------------------------------------------------------------------
 -- 7. Add FK to in_process_artists
 -- ---------------------------------------------------------------------------
 ALTER TABLE public.account_notifications
-  ADD CONSTRAINT account_notifications_artist_id_fkey
-    FOREIGN KEY (artist_id) REFERENCES public.in_process_artists(id)
-    ON UPDATE CASCADE ON DELETE CASCADE;
+ADD CONSTRAINT account_notifications_artist_id_fkey FOREIGN key (artist_id) REFERENCES public.in_process_artists (id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 -- ---------------------------------------------------------------------------
 -- 8. Drop the old artist_address FK and column
 -- ---------------------------------------------------------------------------
 ALTER TABLE public.account_notifications
-  DROP CONSTRAINT IF EXISTS account_notifications_artist_address_fkey;
+DROP CONSTRAINT if EXISTS account_notifications_artist_address_fkey;
 
 ALTER TABLE public.account_notifications
-  DROP COLUMN artist_address;
+DROP COLUMN artist_address;
 
 -- ---------------------------------------------------------------------------
 -- 9. Update get_nudges RPC: remove in_process_artists.address reference,
 --    join through artist_id; return artist_id (uuid) instead of artist_address.
 -- ---------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS public.get_nudges();
+DROP FUNCTION if EXISTS public.get_nudges ();
 
-CREATE FUNCTION public.get_nudges()
-RETURNS TABLE (
-  artist_id              uuid,
-  chat_id                text,
-  days_since_last_moment integer,
-  nudge_period           integer
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE FUNCTION public.get_nudges () returns TABLE (
+  artist_id UUID,
+  chat_id TEXT,
+  days_since_last_moment INTEGER,
+  nudge_period INTEGER
+) language sql stable AS $function$
   WITH nudge_artists AS (
     SELECT
       an.artist_id,
@@ -135,20 +138,14 @@ $function$;
 -- 10. Update get_weekly_wrap_up_stats RPC: remove in_process_artists.address
 --     reference; join through artist_id and then in_process_wallets.
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.get_weekly_wrap_up_stats(
-  p_days integer DEFAULT 7
-)
-RETURNS TABLE (
-  username       text,
-  chat_id        text,
-  telegram_count integer,
-  web_count      integer,
-  api_count      integer,
-  sms_count      integer
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_weekly_wrap_up_stats (p_days INTEGER DEFAULT 7) returns TABLE (
+  username TEXT,
+  chat_id TEXT,
+  telegram_count INTEGER,
+  web_count INTEGER,
+  api_count INTEGER,
+  sms_count INTEGER
+) language sql stable AS $function$
   WITH qualified_artists AS (
     SELECT
       an.artist_id,

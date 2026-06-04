@@ -1,4 +1,5 @@
-set check_function_bodies = off;
+SET
+  check_function_bodies = off;
 
 DO $$
 DECLARE
@@ -14,10 +15,17 @@ BEGIN
   END LOOP;
 END $$;
 
-CREATE OR REPLACE FUNCTION public.get_in_process_tokens(p_artist text DEFAULT NULL::text, p_limit integer DEFAULT 20, p_page integer DEFAULT 1, p_latest boolean DEFAULT true, p_chainid numeric DEFAULT NULL::numeric, p_addresses text[] DEFAULT NULL::text[], p_tokenids integer[] DEFAULT NULL::integer[], p_hidden boolean DEFAULT NULL::boolean, p_type text DEFAULT NULL::text)
- RETURNS json
- LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_in_process_tokens (
+  p_artist TEXT DEFAULT NULL::TEXT,
+  p_limit INTEGER DEFAULT 20,
+  p_page INTEGER DEFAULT 1,
+  p_latest BOOLEAN DEFAULT TRUE,
+  p_chainid NUMERIC DEFAULT NULL::NUMERIC,
+  p_addresses TEXT[] DEFAULT NULL::TEXT[],
+  p_tokenids INTEGER[] DEFAULT NULL::INTEGER[],
+  p_hidden BOOLEAN DEFAULT NULL::BOOLEAN,
+  p_type TEXT DEFAULT NULL::TEXT
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit int := LEAST(p_limit, 100);
   offset_val int := (p_page - 1) * capped_limit;
@@ -243,5 +251,4 @@ BEGIN
     )
   );
 END;
-$function$
-;
+$function$;

@@ -1,15 +1,11 @@
-CREATE OR REPLACE FUNCTION public.get_daily_nudges(
-  p_inactivity_days integer DEFAULT 3,
-  p_recent_assistant_days integer DEFAULT 7
-)
-RETURNS TABLE (
-  artist_address text,
-  room_id text,
-  days_since_last_moment integer
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_daily_nudges (
+  p_inactivity_days INTEGER DEFAULT 3,
+  p_recent_assistant_days INTEGER DEFAULT 7
+) returns TABLE (
+  artist_address TEXT,
+  room_id TEXT,
+  days_since_last_moment INTEGER
+) language sql stable AS $function$
   WITH inactive_artists AS (
     SELECT
       a.address,

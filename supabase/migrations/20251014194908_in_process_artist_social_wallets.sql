@@ -1,24 +1,27 @@
-alter table "public"."in_process_artist_smart_wallets" drop constraint "in_process_artist_smart_wallets_artist_address_fkey";
+ALTER TABLE "public"."in_process_artist_smart_wallets"
+DROP CONSTRAINT "in_process_artist_smart_wallets_artist_address_fkey";
 
-alter table "public"."in_process_artist_smart_wallets" drop constraint "in_process_artist_smart_wallets_pkey";
+ALTER TABLE "public"."in_process_artist_smart_wallets"
+DROP CONSTRAINT "in_process_artist_smart_wallets_pkey";
 
-drop index if exists "public"."in_process_artist_smart_wallets_pkey";
+DROP INDEX if EXISTS "public"."in_process_artist_smart_wallets_pkey";
 
-drop table "public"."in_process_artist_smart_wallets";
+DROP TABLE "public"."in_process_artist_smart_wallets";
 
-create table "public"."in_process_artist_social_wallets" (
-    "social_wallet" text not null,
-    "artist_address" text not null,
-    "created_at" timestamp with time zone not null default now()
+CREATE TABLE "public"."in_process_artist_social_wallets" (
+  "social_wallet" TEXT NOT NULL,
+  "artist_address" TEXT NOT NULL,
+  "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-
-alter table "public"."in_process_artist_social_wallets" enable row level security;
+ALTER TABLE "public"."in_process_artist_social_wallets" enable ROW level security;
 
 CREATE UNIQUE INDEX in_process_artist_social_wallets_pkey ON public.in_process_artist_social_wallets USING btree (social_wallet);
 
-alter table "public"."in_process_artist_social_wallets" add constraint "in_process_artist_social_wallets_pkey" PRIMARY KEY using index "in_process_artist_social_wallets_pkey";
+ALTER TABLE "public"."in_process_artist_social_wallets"
+ADD CONSTRAINT "in_process_artist_social_wallets_pkey" PRIMARY KEY USING index "in_process_artist_social_wallets_pkey";
 
-alter table "public"."in_process_artist_social_wallets" add constraint "in_process_artist_social_wallets_artist_address_fkey" FOREIGN KEY (artist_address) REFERENCES in_process_artists(address) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_artist_social_wallets"
+ADD CONSTRAINT "in_process_artist_social_wallets_artist_address_fkey" FOREIGN key (artist_address) REFERENCES in_process_artists (address) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_artist_social_wallets" validate constraint "in_process_artist_social_wallets_artist_address_fkey";
+ALTER TABLE "public"."in_process_artist_social_wallets" validate CONSTRAINT "in_process_artist_social_wallets_artist_address_fkey";

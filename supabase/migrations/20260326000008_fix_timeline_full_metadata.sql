@@ -1,21 +1,17 @@
 -- Fix: return full metadata row (to_jsonb(meta)) instead of meta.content only,
 -- so callers receive all metadata fields (name, description, image, etc.).
-
 -- ── get_artist_timeline ───────────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.get_artist_timeline(
-  p_artist  text,
-  p_type    text    DEFAULT NULL,
-  p_limit   integer DEFAULT 100,
-  p_page    integer DEFAULT 1,
-  p_chainid numeric DEFAULT 8453,
-  p_hidden  boolean DEFAULT false,
-  p_mime    text    DEFAULT NULL,
-  p_period  text    DEFAULT NULL,
-  p_channel text    DEFAULT NULL
-)
-RETURNS json
-LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_artist_timeline (
+  p_artist TEXT,
+  p_type TEXT DEFAULT NULL,
+  p_limit INTEGER DEFAULT 100,
+  p_page INTEGER DEFAULT 1,
+  p_chainid NUMERIC DEFAULT 8453,
+  p_hidden BOOLEAN DEFAULT FALSE,
+  p_mime TEXT DEFAULT NULL,
+  p_period TEXT DEFAULT NULL,
+  p_channel TEXT DEFAULT NULL
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit  int := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 100), 1000));
   clamped_page  int := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));
@@ -105,20 +101,17 @@ END;
 $function$;
 
 -- ── get_collection_timeline ───────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.get_collection_timeline(
-  p_collection text,
-  p_limit      integer DEFAULT 100,
-  p_page       integer DEFAULT 1,
-  p_chainid    numeric DEFAULT 8453,
-  p_hidden     boolean DEFAULT false,
-  p_mime       text    DEFAULT NULL,
-  p_period     text    DEFAULT NULL,
-  p_channel    text    DEFAULT NULL,
-  p_artist     text    DEFAULT NULL
-)
-RETURNS json
-LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_collection_timeline (
+  p_collection TEXT,
+  p_limit INTEGER DEFAULT 100,
+  p_page INTEGER DEFAULT 1,
+  p_chainid NUMERIC DEFAULT 8453,
+  p_hidden BOOLEAN DEFAULT FALSE,
+  p_mime TEXT DEFAULT NULL,
+  p_period TEXT DEFAULT NULL,
+  p_channel TEXT DEFAULT NULL,
+  p_artist TEXT DEFAULT NULL
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit  int := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 100), 1000));
   clamped_page  int := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));
@@ -190,19 +183,16 @@ END;
 $function$;
 
 -- ── get_in_process_timeline ──────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.get_in_process_timeline(
-  p_limit   integer DEFAULT 100,
-  p_page    integer DEFAULT 1,
-  p_chainid numeric DEFAULT 8453,
-  p_hidden  boolean DEFAULT false,
-  p_mime    text    DEFAULT NULL,
-  p_period  text    DEFAULT NULL,
-  p_channel text    DEFAULT NULL,
-  p_artist  text    DEFAULT NULL
-)
-RETURNS json
-LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_in_process_timeline (
+  p_limit INTEGER DEFAULT 100,
+  p_page INTEGER DEFAULT 1,
+  p_chainid NUMERIC DEFAULT 8453,
+  p_hidden BOOLEAN DEFAULT FALSE,
+  p_mime TEXT DEFAULT NULL,
+  p_period TEXT DEFAULT NULL,
+  p_channel TEXT DEFAULT NULL,
+  p_artist TEXT DEFAULT NULL
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit  int := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 100), 1000));
   clamped_page  int := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));

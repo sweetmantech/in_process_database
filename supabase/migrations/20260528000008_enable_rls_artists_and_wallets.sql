@@ -1,2 +1,3 @@
-ALTER TABLE in_process_artists ENABLE ROW LEVEL SECURITY;
-ALTER TABLE in_process_wallets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE in_process_artists enable ROW level security;
+
+ALTER TABLE in_process_wallets enable ROW level security;

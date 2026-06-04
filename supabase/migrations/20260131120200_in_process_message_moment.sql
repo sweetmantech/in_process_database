@@ -1,16 +1,15 @@
-create table "public"."in_process_message_moment" (
-  "message" uuid not null,
-  "moment" uuid not null
-);
+CREATE TABLE "public"."in_process_message_moment" ("message" UUID NOT NULL, "moment" UUID NOT NULL);
 
-alter table "public"."in_process_message_moment" enable row level security;
+ALTER TABLE "public"."in_process_message_moment" enable ROW level security;
 
 CREATE UNIQUE INDEX in_process_message_moment_message_moment_key ON public.in_process_message_moment USING btree (message, moment);
 
-alter table "public"."in_process_message_moment" add constraint "in_process_message_moment_message_fkey" FOREIGN KEY (message) REFERENCES public.in_process_messages(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_message_moment"
+ADD CONSTRAINT "in_process_message_moment_message_fkey" FOREIGN key (message) REFERENCES public.in_process_messages (id) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_message_moment" validate constraint "in_process_message_moment_message_fkey";
+ALTER TABLE "public"."in_process_message_moment" validate CONSTRAINT "in_process_message_moment_message_fkey";
 
-alter table "public"."in_process_message_moment" add constraint "in_process_message_moment_moment_fkey" FOREIGN KEY (moment) REFERENCES public.in_process_moments(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_message_moment"
+ADD CONSTRAINT "in_process_message_moment_moment_fkey" FOREIGN key (moment) REFERENCES public.in_process_moments (id) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_message_moment" validate constraint "in_process_message_moment_moment_fkey";
+ALTER TABLE "public"."in_process_message_moment" validate CONSTRAINT "in_process_message_moment_moment_fkey";

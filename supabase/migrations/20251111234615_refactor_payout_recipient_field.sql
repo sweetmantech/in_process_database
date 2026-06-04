@@ -1,3 +1,5 @@
-alter table "public"."in_process_tokens" drop column "payoutRecipientNotDefaultAdmin";
+ALTER TABLE "public"."in_process_tokens"
+DROP COLUMN "payoutRecipientNotDefaultAdmin";
 
-alter table "public"."in_process_tokens" add column "payoutRecipient" text;
+ALTER TABLE "public"."in_process_tokens"
+ADD COLUMN "payoutRecipient" TEXT;

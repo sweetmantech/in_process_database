@@ -1,28 +1,23 @@
 -- get_arweave_uploads: restore file_size_bytes and size sort support
 -- (was accidentally dropped in 20260528000001 during the wallet join refactor).
+DROP FUNCTION if EXISTS public.get_arweave_uploads (TEXT, TIMESTAMPTZ, INTEGER, INTEGER, TEXT, TEXT);
 
-DROP FUNCTION IF EXISTS public.get_arweave_uploads(text, timestamptz, integer, integer, text, text);
-
-CREATE OR REPLACE FUNCTION public.get_arweave_uploads(
-  p_artist     TEXT DEFAULT NULL,
-  p_from       TIMESTAMPTZ DEFAULT NULL,
-  p_limit      INT DEFAULT 20,
-  p_page       INT DEFAULT 1,
-  p_sort_by    TEXT DEFAULT 'usdc_cost',
+CREATE OR REPLACE FUNCTION public.get_arweave_uploads (
+  p_artist TEXT DEFAULT NULL,
+  p_from TIMESTAMPTZ DEFAULT NULL,
+  p_limit INT DEFAULT 20,
+  p_page INT DEFAULT 1,
+  p_sort_by TEXT DEFAULT 'usdc_cost',
   p_sort_order TEXT DEFAULT 'desc'
-)
-RETURNS TABLE (
-  winc_cost       TEXT,
-  usdc_cost       NUMERIC,
+) returns TABLE (
+  winc_cost TEXT,
+  usdc_cost NUMERIC,
   file_size_bytes BIGINT,
   artist_username TEXT,
-  artist_address  TEXT,
-  total_count     BIGINT,
+  artist_address TEXT,
+  total_count BIGINT,
   total_usdc_cost NUMERIC
-)
-LANGUAGE sql
-STABLE
-AS $$
+) language sql stable AS $$
   WITH filtered AS (
     SELECT
       u.artist_address,

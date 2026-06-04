@@ -1,1 +1,1 @@
-ALTER TABLE public.account_notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.account_notifications enable ROW level security;

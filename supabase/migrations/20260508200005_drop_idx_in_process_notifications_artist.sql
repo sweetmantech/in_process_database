@@ -1,2 +1,1 @@
-DROP INDEX IF EXISTS public.idx_in_process_notifications_artist;
-
+DROP INDEX if EXISTS public.idx_in_process_notifications_artist;

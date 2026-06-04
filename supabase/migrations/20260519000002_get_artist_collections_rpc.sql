@@ -1,14 +1,11 @@
 -- Returns collections by artist that have at least one moment with a non-empty
 -- content.uri (same filter applied to timeline RPCs in 20260519000001).
-CREATE OR REPLACE FUNCTION public.get_artist_collections(
-  p_artist  text    DEFAULT NULL,
-  p_chainid int     DEFAULT NULL,
-  p_limit   int     DEFAULT 20,
-  p_page    int     DEFAULT 1
-)
-RETURNS json
-LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_artist_collections (
+  p_artist TEXT DEFAULT NULL,
+  p_chainid INT DEFAULT NULL,
+  p_limit INT DEFAULT 20,
+  p_page INT DEFAULT 1
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit int := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 20), 100));
   clamped_page int := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));

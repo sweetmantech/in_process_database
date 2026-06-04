@@ -1,20 +1,27 @@
-alter table "public"."in_process_token_admins" drop constraint "in_process_token_admins_token_id_artist_address_unique";
+ALTER TABLE "public"."in_process_token_admins"
+DROP CONSTRAINT "in_process_token_admins_token_id_artist_address_unique";
 
-alter table "public"."in_process_token_admins" drop constraint "in_process_token_admins_token_id_fkey";
+ALTER TABLE "public"."in_process_token_admins"
+DROP CONSTRAINT "in_process_token_admins_token_id_fkey";
 
-drop index if exists "public"."in_process_token_admins_token_id_artist_address_unique";
+DROP INDEX if EXISTS "public"."in_process_token_admins_token_id_artist_address_unique";
 
-alter table "public"."in_process_token_admins" drop column "created_at";
+ALTER TABLE "public"."in_process_token_admins"
+DROP COLUMN "created_at";
 
-alter table "public"."in_process_token_admins" drop column "token_id";
+ALTER TABLE "public"."in_process_token_admins"
+DROP COLUMN "token_id";
 
-alter table "public"."in_process_token_admins" add column "createdAt" timestamp with time zone;
+ALTER TABLE "public"."in_process_token_admins"
+ADD COLUMN "createdAt" TIMESTAMP WITH TIME ZONE;
 
-alter table "public"."in_process_token_admins" add column "token" uuid default gen_random_uuid();
+ALTER TABLE "public"."in_process_token_admins"
+ADD COLUMN "token" UUID DEFAULT GEN_RANDOM_UUID();
 
-alter table "public"."in_process_token_admins" add constraint "in_process_token_admins_token_fkey" FOREIGN KEY (token) REFERENCES public.in_process_tokens(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_token_admins"
+ADD CONSTRAINT "in_process_token_admins_token_fkey" FOREIGN key (token) REFERENCES public.in_process_tokens (id) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_token_admins" validate constraint "in_process_token_admins_token_fkey";
+ALTER TABLE "public"."in_process_token_admins" validate CONSTRAINT "in_process_token_admins_token_fkey";
 
-alter table "public"."in_process_token_admins" add constraint "in_process_token_admins_token_artist_address_unique" UNIQUE (token, artist_address);
-
+ALTER TABLE "public"."in_process_token_admins"
+ADD CONSTRAINT "in_process_token_admins_token_artist_address_unique" UNIQUE (token, artist_address);

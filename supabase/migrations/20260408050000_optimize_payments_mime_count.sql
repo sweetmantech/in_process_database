@@ -10,23 +10,18 @@
 --
 -- Also adds idx_metadata_moment so the reverse join (moment → metadata) is
 -- fast for the data query.
+CREATE INDEX if NOT EXISTS idx_metadata_moment ON public.in_process_metadata USING btree (moment);
 
-CREATE INDEX IF NOT EXISTS idx_metadata_moment
-  ON public.in_process_metadata USING btree (moment);
+DROP FUNCTION if EXISTS public.get_in_process_payments (INTEGER, INTEGER, TEXT[], TEXT[], NUMERIC, TEXT);
 
-DROP FUNCTION IF EXISTS public.get_in_process_payments(integer, integer, text[], text[], numeric, text);
-
-CREATE OR REPLACE FUNCTION public.get_in_process_payments(
-  p_limit      integer DEFAULT 20,
-  p_page       integer DEFAULT 1,
-  p_artists    text[]  DEFAULT NULL,
-  p_collectors text[]  DEFAULT NULL,
-  p_chainid    numeric DEFAULT 8453,
-  p_mime       text    DEFAULT NULL
-)
-RETURNS json
-LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_in_process_payments (
+  p_limit INTEGER DEFAULT 20,
+  p_page INTEGER DEFAULT 1,
+  p_artists TEXT[] DEFAULT NULL,
+  p_collectors TEXT[] DEFAULT NULL,
+  p_chainid NUMERIC DEFAULT 8453,
+  p_mime TEXT DEFAULT NULL
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit   int  := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 20), 100));
   clamped_page   int  := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));

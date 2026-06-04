@@ -1,19 +1,20 @@
-create table "public"."in_process_api_keys" (
-    "id" uuid not null default gen_random_uuid(),
-    "name" text not null,
-    "artist_address" text,
-    "key_hash" text,
-    "created_at" timestamp with time zone not null default now(),
-    "last_used" timestamp without time zone
+CREATE TABLE "public"."in_process_api_keys" (
+  "id" UUID NOT NULL DEFAULT GEN_RANDOM_UUID(),
+  "name" TEXT NOT NULL,
+  "artist_address" TEXT,
+  "key_hash" TEXT,
+  "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  "last_used" TIMESTAMP WITHOUT TIME ZONE
 );
 
-
-alter table "public"."in_process_api_keys" enable row level security;
+ALTER TABLE "public"."in_process_api_keys" enable ROW level security;
 
 CREATE UNIQUE INDEX in_process_api_keys_pkey ON public.in_process_api_keys USING btree (id);
 
-alter table "public"."in_process_api_keys" add constraint "in_process_api_keys_pkey" PRIMARY KEY using index "in_process_api_keys_pkey";
+ALTER TABLE "public"."in_process_api_keys"
+ADD CONSTRAINT "in_process_api_keys_pkey" PRIMARY KEY USING index "in_process_api_keys_pkey";
 
-alter table "public"."in_process_api_keys" add constraint "in_process_api_keys_artist_address_fkey" FOREIGN KEY (artist_address) REFERENCES in_process_artists(address) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+ALTER TABLE "public"."in_process_api_keys"
+ADD CONSTRAINT "in_process_api_keys_artist_address_fkey" FOREIGN key (artist_address) REFERENCES in_process_artists (address) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
-alter table "public"."in_process_api_keys" validate constraint "in_process_api_keys_artist_address_fkey";
+ALTER TABLE "public"."in_process_api_keys" validate CONSTRAINT "in_process_api_keys_artist_address_fkey";

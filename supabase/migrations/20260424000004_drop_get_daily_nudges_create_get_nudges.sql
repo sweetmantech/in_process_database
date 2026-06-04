@@ -1,5 +1,5 @@
 -- Drop the old fixed-period nudge function.
-DROP FUNCTION IF EXISTS public.get_daily_nudges(integer, integer);
+DROP FUNCTION if EXISTS public.get_daily_nudges (INTEGER, INTEGER);
 
 -- get_nudges: returns artists due for a nudge, respecting each artist's own nudge_period.
 --
@@ -9,17 +9,12 @@ DROP FUNCTION IF EXISTS public.get_daily_nudges(integer, integer);
 --   3. No nudge message has been sent to their chat in the last nudge_period days
 --      (cooldown gate — nudge messages are identified by parts[0].text starting with
 --       'Hi! It''s been', so other assistant messages do not reset the cooldown)
-
-CREATE FUNCTION public.get_nudges()
-RETURNS TABLE (
-  artist_address       text,
-  chat_id              text,
-  days_since_last_moment integer,
-  nudge_period         integer
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE FUNCTION public.get_nudges () returns TABLE (
+  artist_address TEXT,
+  chat_id TEXT,
+  days_since_last_moment INTEGER,
+  nudge_period INTEGER
+) language sql stable AS $function$
   -- Artists opted in to nudges, paired with their period (days).
   WITH nudge_artists AS (
     SELECT an.artist_address, an.nudge_period

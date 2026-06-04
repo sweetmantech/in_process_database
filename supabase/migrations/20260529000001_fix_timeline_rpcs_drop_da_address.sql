@@ -2,23 +2,28 @@
 -- in_process_artists on da.address, which was dropped in 20260528000001.
 -- Rewrite both to go through in_process_wallets (same pattern as
 -- get_artist_timeline in 20260527000008).
-
 -- ── get_in_process_timeline ──────────────────────────────────────────────────
-DROP FUNCTION IF EXISTS public.get_in_process_timeline(integer, integer, numeric, boolean, text, text, text, boolean);
+DROP FUNCTION if EXISTS public.get_in_process_timeline (
+  INTEGER,
+  INTEGER,
+  NUMERIC,
+  BOOLEAN,
+  TEXT,
+  TEXT,
+  TEXT,
+  BOOLEAN
+);
 
-CREATE OR REPLACE FUNCTION public.get_in_process_timeline(
-  p_limit   integer DEFAULT 100,
-  p_page    integer DEFAULT 1,
-  p_chainid numeric DEFAULT NULL,
-  p_hidden  boolean DEFAULT false,
-  p_mime    text    DEFAULT NULL,
-  p_period  text    DEFAULT NULL,
-  p_channel text    DEFAULT NULL,
-  p_curated boolean DEFAULT false
-)
-RETURNS json
-LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_in_process_timeline (
+  p_limit INTEGER DEFAULT 100,
+  p_page INTEGER DEFAULT 1,
+  p_chainid NUMERIC DEFAULT NULL,
+  p_hidden BOOLEAN DEFAULT FALSE,
+  p_mime TEXT DEFAULT NULL,
+  p_period TEXT DEFAULT NULL,
+  p_channel TEXT DEFAULT NULL,
+  p_curated BOOLEAN DEFAULT FALSE
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit  int := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 100), 1000));
   clamped_page  int := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));
@@ -157,23 +162,31 @@ END;
 $function$;
 
 -- ── get_collection_timeline ──────────────────────────────────────────────────
-DROP FUNCTION IF EXISTS public.get_collection_timeline(text, integer, integer, numeric, boolean, text, text, text, text, boolean);
+DROP FUNCTION if EXISTS public.get_collection_timeline (
+  TEXT,
+  INTEGER,
+  INTEGER,
+  NUMERIC,
+  BOOLEAN,
+  TEXT,
+  TEXT,
+  TEXT,
+  TEXT,
+  BOOLEAN
+);
 
-CREATE OR REPLACE FUNCTION public.get_collection_timeline(
-  p_collection text,
-  p_limit      integer DEFAULT 100,
-  p_page       integer DEFAULT 1,
-  p_chainid    numeric DEFAULT NULL,
-  p_hidden     boolean DEFAULT false,
-  p_mime       text    DEFAULT NULL,
-  p_period     text    DEFAULT NULL,
-  p_channel    text    DEFAULT NULL,
-  p_artist     text    DEFAULT NULL,
-  p_curated    boolean DEFAULT false
-)
-RETURNS json
-LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_collection_timeline (
+  p_collection TEXT,
+  p_limit INTEGER DEFAULT 100,
+  p_page INTEGER DEFAULT 1,
+  p_chainid NUMERIC DEFAULT NULL,
+  p_hidden BOOLEAN DEFAULT FALSE,
+  p_mime TEXT DEFAULT NULL,
+  p_period TEXT DEFAULT NULL,
+  p_channel TEXT DEFAULT NULL,
+  p_artist TEXT DEFAULT NULL,
+  p_curated BOOLEAN DEFAULT FALSE
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit  int := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 100), 1000));
   clamped_page  int := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));

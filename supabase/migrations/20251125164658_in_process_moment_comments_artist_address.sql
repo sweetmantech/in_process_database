@@ -1,3 +1,3 @@
-alter table "public"."in_process_moment_comments" alter column "artist_address" drop default;
-
-
+ALTER TABLE "public"."in_process_moment_comments"
+ALTER COLUMN "artist_address"
+DROP DEFAULT;

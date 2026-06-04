@@ -1,40 +1,40 @@
-create table in_process_artists (
-  address text not null,
-  username text null,
-  bio text null,
-  instagram_username text null,
-  twitter_username text null,
-  telegram_username text null,
-  constraint in_process_artists_pkey primary key (address)
-) TABLESPACE pg_default;
+CREATE TABLE in_process_artists (
+  address TEXT NOT NULL,
+  username TEXT NULL,
+  bio TEXT NULL,
+  instagram_username TEXT NULL,
+  twitter_username TEXT NULL,
+  telegram_username TEXT NULL,
+  CONSTRAINT in_process_artists_pkey PRIMARY KEY (address)
+) tablespace pg_default;
 
-create unique INDEX IF not exists idx_in_process_artists_address on in_process_artists using btree (address) TABLESPACE pg_default;
+CREATE UNIQUE INDEX if NOT EXISTS idx_in_process_artists_address ON in_process_artists USING btree (address) tablespace pg_default;
 
-create table in_process_tokens (
-  id uuid not null default gen_random_uuid (),
-  address text not null default ''::text,
-  "tokenId" numeric not null,
-  uri text not null default ''::text,
-  "defaultAdmin" text not null default ''::text,
-  "chainId" numeric not null,
-  "createdAt" timestamp with time zone not null,
-  hidden boolean not null default false,
-  constraint in_process_tokens_pkey primary key (id),
-  constraint in_process_tokens_address_chainid_unique unique (address, "chainId"),
-  constraint fk_defaultadmin_artist foreign KEY ("defaultAdmin") references in_process_artists (address) on update CASCADE on delete RESTRICT
-) TABLESPACE pg_default;
+CREATE TABLE in_process_tokens (
+  id UUID NOT NULL DEFAULT GEN_RANDOM_UUID(),
+  address TEXT NOT NULL DEFAULT ''::TEXT,
+  "tokenId" NUMERIC NOT NULL,
+  uri TEXT NOT NULL DEFAULT ''::TEXT,
+  "defaultAdmin" TEXT NOT NULL DEFAULT ''::TEXT,
+  "chainId" NUMERIC NOT NULL,
+  "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+  hidden BOOLEAN NOT NULL DEFAULT FALSE,
+  CONSTRAINT in_process_tokens_pkey PRIMARY KEY (id),
+  CONSTRAINT in_process_tokens_address_chainid_unique UNIQUE (address, "chainId"),
+  CONSTRAINT fk_defaultadmin_artist FOREIGN key ("defaultAdmin") REFERENCES in_process_artists (address) ON UPDATE CASCADE ON DELETE RESTRICT
+) tablespace pg_default;
 
-create index IF not exists idx_in_process_tokens_defaultadmin on in_process_tokens using btree ("defaultAdmin") TABLESPACE pg_default;
+CREATE INDEX if NOT EXISTS idx_in_process_tokens_defaultadmin ON in_process_tokens USING btree ("defaultAdmin") tablespace pg_default;
 
-create table in_process_payments (
-  id uuid not null default gen_random_uuid (),
-  token uuid not null,
-  buyer text null,
-  amount numeric null,
-  hash text null,
-  block numeric null,
-  constraint in_process_payments_pkey primary key (id),
-  constraint in_process_payments_hash_buyer_token_unique unique (hash, buyer, token),
-  constraint in_process_payments_buyer_fkey foreign KEY (buyer) references in_process_artists (address) on delete CASCADE,
-  constraint in_process_payments_token_fkey foreign KEY (token) references in_process_tokens (id) on delete CASCADE
-) TABLESPACE pg_default;
+CREATE TABLE in_process_payments (
+  id UUID NOT NULL DEFAULT GEN_RANDOM_UUID(),
+  token UUID NOT NULL,
+  buyer TEXT NULL,
+  amount NUMERIC NULL,
+  hash TEXT NULL,
+  block NUMERIC NULL,
+  CONSTRAINT in_process_payments_pkey PRIMARY KEY (id),
+  CONSTRAINT in_process_payments_hash_buyer_token_unique UNIQUE (hash, buyer, token),
+  CONSTRAINT in_process_payments_buyer_fkey FOREIGN key (buyer) REFERENCES in_process_artists (address) ON DELETE CASCADE,
+  CONSTRAINT in_process_payments_token_fkey FOREIGN key (token) REFERENCES in_process_tokens (id) ON DELETE CASCADE
+) tablespace pg_default;

@@ -1,9 +1,5 @@
 -- Reusable channel filter: matches moments by message client or 'web' (no message)
-CREATE OR REPLACE FUNCTION public.moment_matches_channel(p_moment_id uuid, p_channel text)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-AS $$
+CREATE OR REPLACE FUNCTION public.moment_matches_channel (p_moment_id UUID, p_channel TEXT) returns BOOLEAN language sql stable AS $$
   SELECT
     p_channel IS NULL
     OR EXISTS (
@@ -27,11 +23,7 @@ AS $$
 $$;
 
 -- accidentally filtering to only moments from "right now" (INTERVAL '0').
-CREATE OR REPLACE FUNCTION public.moment_matches_period(p_created_at timestamptz, p_period text)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-AS $$
+CREATE OR REPLACE FUNCTION public.moment_matches_period (p_created_at TIMESTAMPTZ, p_period TEXT) returns BOOLEAN language sql stable AS $$
   SELECT
     p_period IS NULL
     OR p_period = 'all'
@@ -50,4 +42,3 @@ AS $$
       ELSE NULL::interval
     END
 $$;
-

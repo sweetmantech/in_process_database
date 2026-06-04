@@ -1,15 +1,12 @@
 -- Optimize get_in_process_payments: remove unused fields from moment, collection,
 -- fee_recipients, and buyer objects to reduce JSON payload size
-CREATE OR REPLACE FUNCTION public.get_in_process_payments(
-  p_limit integer DEFAULT 20,
-  p_page integer DEFAULT 1,
-  p_artists text[] DEFAULT NULL,
-  p_collectors text[] DEFAULT NULL,
-  p_chainid numeric DEFAULT 8453
-)
-RETURNS json
-LANGUAGE plpgsql
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_in_process_payments (
+  p_limit INTEGER DEFAULT 20,
+  p_page INTEGER DEFAULT 1,
+  p_artists TEXT[] DEFAULT NULL,
+  p_collectors TEXT[] DEFAULT NULL,
+  p_chainid NUMERIC DEFAULT 8453
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit int := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 20), 100));
   clamped_page int := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));
@@ -118,5 +115,4 @@ BEGIN
     )
   );
 END;
-$function$
-;
+$function$;

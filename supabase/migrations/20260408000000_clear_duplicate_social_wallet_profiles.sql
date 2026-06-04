@@ -9,13 +9,27 @@ SET
   twitter_username = NULL,
   telegram_username = NULL,
   farcaster_username = NULL
-WHERE a.address IN (
-  SELECT sw.social_wallet
-  FROM in_process_artist_social_wallets sw
-  WHERE EXISTS (
-    SELECT 1 FROM in_process_artists b WHERE b.address = sw.artist_address
-  )
-  AND EXISTS (
-    SELECT 1 FROM in_process_artists c WHERE c.address = sw.social_wallet
-  )
-);
+WHERE
+  a.address IN (
+    SELECT
+      sw.social_wallet
+    FROM
+      in_process_artist_social_wallets sw
+    WHERE
+      EXISTS (
+        SELECT
+          1
+        FROM
+          in_process_artists b
+        WHERE
+          b.address = sw.artist_address
+      )
+      AND EXISTS (
+        SELECT
+          1
+        FROM
+          in_process_artists c
+        WHERE
+          c.address = sw.social_wallet
+      )
+  );

@@ -1,4 +1,4 @@
-create type "public"."collection_protocol" as enum ('in_process', 'catalog');
+CREATE TYPE "public"."collection_protocol" AS ENUM('in_process', 'catalog');
 
-alter table "public"."in_process_collections"
-  add column "protocol" collection_protocol not null default 'in_process';
+ALTER TABLE "public"."in_process_collections"
+ADD COLUMN "protocol" collection_protocol NOT NULL DEFAULT 'in_process';

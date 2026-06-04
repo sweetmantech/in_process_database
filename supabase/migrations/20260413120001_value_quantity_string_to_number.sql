@@ -1,3 +1,3 @@
-ALTER TABLE "public"."in_process_transfers" 
-  ALTER COLUMN quantity TYPE numeric USING (quantity::numeric),
-  ALTER COLUMN value TYPE numeric USING (value::numeric);
+ALTER TABLE "public"."in_process_transfers"
+ALTER COLUMN quantity type NUMERIC USING (quantity::NUMERIC),
+ALTER COLUMN value type NUMERIC USING (value::NUMERIC);

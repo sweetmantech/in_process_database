@@ -2,37 +2,32 @@
 -- joined through it. After migration 017, every FK that pointed at
 -- in_process_artists(address) was repointed to in_process_wallets(address),
 -- so the canonical address lives in in_process_wallets, not on the artist row.
-
 -- ---------------------------------------------------------------------------
 -- 1. get_active_artists_stats
 --    Replace `FROM in_process_artists a JOIN artist_moments ON a.address`
 --    with a wallet-based join so we can still look up addresses after the
 --    column is gone.
 -- ---------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS public.get_active_artists_stats(TEXT, INT, INT, TEXT, TEXT, TEXT);
+DROP FUNCTION if EXISTS public.get_active_artists_stats (TEXT, INT, INT, TEXT, TEXT, TEXT);
 
-CREATE FUNCTION public.get_active_artists_stats(
-  p_period     TEXT DEFAULT 'all',
-  p_limit      INT  DEFAULT 20,
-  p_page       INT  DEFAULT 1,
-  p_artist     TEXT DEFAULT NULL,
-  p_sort_by    TEXT DEFAULT 'created_count',
+CREATE FUNCTION public.get_active_artists_stats (
+  p_period TEXT DEFAULT 'all',
+  p_limit INT DEFAULT 20,
+  p_page INT DEFAULT 1,
+  p_artist TEXT DEFAULT NULL,
+  p_sort_by TEXT DEFAULT 'created_count',
   p_sort_order TEXT DEFAULT 'desc'
-)
-RETURNS TABLE (
-  address          TEXT,
-  username         TEXT,
-  created_count    BIGINT,
+) returns TABLE (
+  address TEXT,
+  username TEXT,
+  created_count BIGINT,
   airdropped_count BIGINT,
-  telegram_count   BIGINT,
-  web_count        BIGINT,
-  api_count        BIGINT,
-  sms_count        BIGINT,
-  total_count      BIGINT
-)
-LANGUAGE plpgsql
-STABLE
-AS $$
+  telegram_count BIGINT,
+  web_count BIGINT,
+  api_count BIGINT,
+  sms_count BIGINT,
+  total_count BIGINT
+) language plpgsql stable AS $$
 DECLARE
   v_sort_by    TEXT := LOWER(COALESCE(p_sort_by, 'created_count'));
   v_sort_order TEXT := LOWER(COALESCE(p_sort_order, 'desc'));
@@ -245,27 +240,23 @@ $$;
 --    Route the in_process_artists join through in_process_wallets; return
 --    u.artist_address directly instead of a.address (same value).
 -- ---------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS public.get_arweave_uploads(text, timestamptz, integer, integer, text, text);
+DROP FUNCTION if EXISTS public.get_arweave_uploads (TEXT, TIMESTAMPTZ, INTEGER, INTEGER, TEXT, TEXT);
 
-CREATE OR REPLACE FUNCTION public.get_arweave_uploads(
-  p_artist     TEXT DEFAULT NULL,
-  p_from       TIMESTAMPTZ DEFAULT NULL,
-  p_limit      INT DEFAULT 20,
-  p_page       INT DEFAULT 1,
-  p_sort_by    TEXT DEFAULT 'usdc_cost',
+CREATE OR REPLACE FUNCTION public.get_arweave_uploads (
+  p_artist TEXT DEFAULT NULL,
+  p_from TIMESTAMPTZ DEFAULT NULL,
+  p_limit INT DEFAULT 20,
+  p_page INT DEFAULT 1,
+  p_sort_by TEXT DEFAULT 'usdc_cost',
   p_sort_order TEXT DEFAULT 'desc'
-)
-RETURNS TABLE (
-  winc_cost       TEXT,
-  usdc_cost       NUMERIC,
+) returns TABLE (
+  winc_cost TEXT,
+  usdc_cost NUMERIC,
   artist_username TEXT,
-  artist_address  TEXT,
-  total_count     BIGINT,
+  artist_address TEXT,
+  total_count BIGINT,
   total_usdc_cost NUMERIC
-)
-LANGUAGE sql
-STABLE
-AS $$
+) language sql stable AS $$
   WITH filtered AS (
     SELECT
       u.artist_address,
@@ -334,29 +325,25 @@ $$;
 -- ---------------------------------------------------------------------------
 -- 3. get_artist_arweave_uploads (per-upload listing)
 -- ---------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS public.get_artist_arweave_uploads(text, timestamptz, integer, integer, text, text);
+DROP FUNCTION if EXISTS public.get_artist_arweave_uploads (TEXT, TIMESTAMPTZ, INTEGER, INTEGER, TEXT, TEXT);
 
-CREATE OR REPLACE FUNCTION public.get_artist_arweave_uploads(
-  p_artist     TEXT DEFAULT NULL,
-  p_from       TIMESTAMPTZ DEFAULT NULL,
-  p_limit      INT DEFAULT 20,
-  p_page       INT DEFAULT 1,
-  p_sort_by    TEXT DEFAULT 'created_at',
+CREATE OR REPLACE FUNCTION public.get_artist_arweave_uploads (
+  p_artist TEXT DEFAULT NULL,
+  p_from TIMESTAMPTZ DEFAULT NULL,
+  p_limit INT DEFAULT 20,
+  p_page INT DEFAULT 1,
+  p_sort_by TEXT DEFAULT 'created_at',
   p_sort_order TEXT DEFAULT 'desc'
-)
-RETURNS TABLE (
-  id              UUID,
-  arweave_uri     TEXT,
-  winc_cost       TEXT,
-  usdc_cost       NUMERIC,
+) returns TABLE (
+  id UUID,
+  arweave_uri TEXT,
+  winc_cost TEXT,
+  usdc_cost NUMERIC,
   file_size_bytes BIGINT,
-  content_type    TEXT,
-  created_at      TIMESTAMPTZ,
-  total_count     BIGINT
-)
-LANGUAGE sql
-STABLE
-AS $$
+  content_type TEXT,
+  created_at TIMESTAMPTZ,
+  total_count BIGINT
+) language sql stable AS $$
   SELECT
     u.id,
     u.arweave_uri,
@@ -395,17 +382,15 @@ $$;
 --    Replace `LEFT JOIN in_process_artists art ON art.address = c.creator`
 --    with a two-hop join through in_process_wallets.
 -- ---------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS public.get_artist_collections(text, int, int, int);
-CREATE OR REPLACE FUNCTION public.get_collections(
-  p_artist    text    DEFAULT NULL,
-  p_chainid   int     DEFAULT NULL,
-  p_addresses text[]  DEFAULT NULL,
-  p_limit     int     DEFAULT 20,
-  p_page      int     DEFAULT 1
-)
-RETURNS json
-LANGUAGE plpgsql
-AS $function$
+DROP FUNCTION if EXISTS public.get_artist_collections (TEXT, INT, INT, INT);
+
+CREATE OR REPLACE FUNCTION public.get_collections (
+  p_artist TEXT DEFAULT NULL,
+  p_chainid INT DEFAULT NULL,
+  p_addresses TEXT[] DEFAULT NULL,
+  p_limit INT DEFAULT 20,
+  p_page INT DEFAULT 1
+) returns JSON language plpgsql AS $function$
 DECLARE
   capped_limit    int     := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 20), 100));
   clamped_page    int     := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));
@@ -486,23 +471,16 @@ $function$;
 --    and `JOIN in_process_artists collector ON collector.address = ft.recipient`
 --    with two-hop joins through in_process_wallets.
 -- ---------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS public.get_airdrop_transfers(text, text, numeric, text, integer, integer);
+DROP FUNCTION if EXISTS public.get_airdrop_transfers (TEXT, TEXT, NUMERIC, TEXT, INTEGER, INTEGER);
 
-CREATE OR REPLACE FUNCTION public.get_airdrop_transfers(
-  p_artist text DEFAULT NULL,
-  p_collector text DEFAULT NULL,
-  p_chain_id numeric DEFAULT NULL,
-  p_content_type text DEFAULT NULL,
-  p_limit integer DEFAULT 20,
-  p_offset integer DEFAULT 0
-)
-RETURNS TABLE (
-  transfers jsonb,
-  total_count bigint
-)
-LANGUAGE sql
-STABLE
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_airdrop_transfers (
+  p_artist TEXT DEFAULT NULL,
+  p_collector TEXT DEFAULT NULL,
+  p_chain_id NUMERIC DEFAULT NULL,
+  p_content_type TEXT DEFAULT NULL,
+  p_limit INTEGER DEFAULT 20,
+  p_offset INTEGER DEFAULT 0
+) returns TABLE (transfers JSONB, total_count BIGINT) language sql stable AS $function$
   WITH filtered_collections AS (
     SELECT c.id
     FROM public.in_process_collections c
@@ -608,4 +586,4 @@ $function$;
 --    in_process_wallets; all FKs were repointed in migration 017).
 -- ---------------------------------------------------------------------------
 ALTER TABLE public.in_process_artists
-  DROP COLUMN IF EXISTS address;
+DROP COLUMN IF EXISTS address;

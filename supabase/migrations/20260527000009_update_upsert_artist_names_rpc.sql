@@ -1,7 +1,4 @@
-CREATE OR REPLACE FUNCTION upsert_artist_names(artists jsonb)
-RETURNS void
-LANGUAGE plpgsql
-AS $$
+CREATE OR REPLACE FUNCTION upsert_artist_names (artists JSONB) returns void language plpgsql AS $$
 DECLARE
   artist     jsonb;
   v_artist_id uuid;
