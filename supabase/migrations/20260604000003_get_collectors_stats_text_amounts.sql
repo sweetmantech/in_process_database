@@ -1,6 +1,6 @@
 -- get_collectors_stats: return eth_spent and usdc_spent as TEXT
 -- to avoid scientific notation (e.g. 4.5876e-21) in JSON output.
-DROP FUNCTION IF EXISTS public.get_collectors_stats (TEXT, INT, INT, TEXT, TEXT, TEXT);
+DROP FUNCTION if EXISTS public.get_collectors_stats (TEXT, INT, INT, TEXT, TEXT, TEXT);
 
 CREATE FUNCTION public.get_collectors_stats (
   p_period TEXT DEFAULT 'all',
@@ -100,7 +100,8 @@ BEGIN
           WHEN 'eth_spent'       THEN su.eth_spent
           WHEN 'usdc_spent'      THEN su.usdc_spent
         END
-      END DESC NULLS LAST
+      END DESC NULLS LAST,
+      su.collector ASC
     LIMIT p_limit OFFSET (p_page - 1) * p_limit
   )
   SELECT
@@ -125,6 +126,7 @@ BEGIN
         WHEN 'eth_spent'       THEN p.eth_spent
         WHEN 'usdc_spent'      THEN p.usdc_spent
       END
-    END DESC NULLS LAST;
+    END DESC NULLS LAST,
+    p.collector ASC;
 END;
 $$;
