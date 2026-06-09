@@ -81,7 +81,7 @@ BEGIN
     WHERE a.username IS NOT NULL
       AND a.username != ''
   ),
-  paged AS (
+  with_sort AS (
     SELECT
       s.address,
       s.username,
@@ -91,24 +91,28 @@ BEGIN
       CASE v_sort_by
         WHEN 'total_created_count'   THEN s.total_created_count
         WHEN 'total_collected_count' THEN s.total_collected_count
-      END              AS sort_key
+      END AS sort_key
     FROM stats s
+  ),
+  paged AS (
+    SELECT *
+    FROM with_sort
     ORDER BY
       CASE WHEN v_sort_order = 'asc'  THEN sort_key END ASC  NULLS LAST,
       CASE WHEN v_sort_order = 'desc' THEN sort_key END DESC NULLS LAST,
-      s.address ASC
+      address ASC
     LIMIT p_limit OFFSET (p_page - 1) * p_limit
   )
   SELECT
-    p.address,
-    p.username,
-    p.total_created_count,
-    p.total_collected_count,
-    p.total_count
-  FROM paged p
+    address,
+    username,
+    total_created_count,
+    total_collected_count,
+    total_count
+  FROM paged
   ORDER BY
-    CASE WHEN v_sort_order = 'asc'  THEN p.sort_key END ASC  NULLS LAST,
-    CASE WHEN v_sort_order = 'desc' THEN p.sort_key END DESC NULLS LAST,
-    p.address ASC;
+    CASE WHEN v_sort_order = 'asc'  THEN sort_key END ASC  NULLS LAST,
+    CASE WHEN v_sort_order = 'desc' THEN sort_key END DESC NULLS LAST,
+    address ASC;
 END;
 $$;
