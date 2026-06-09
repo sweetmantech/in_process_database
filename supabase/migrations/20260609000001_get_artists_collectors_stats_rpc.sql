@@ -104,15 +104,15 @@ BEGIN
     LIMIT p_limit OFFSET (p_page - 1) * p_limit
   )
   SELECT
-    address,
-    username,
-    total_created_count,
-    total_collected_count,
-    total_count
-  FROM paged
+    p.address,
+    p.username,
+    p.total_created_count,
+    p.total_collected_count,
+    p.total_count
+  FROM paged p
   ORDER BY
-    CASE WHEN v_sort_order = 'asc'  THEN sort_key END ASC  NULLS LAST,
-    CASE WHEN v_sort_order = 'desc' THEN sort_key END DESC NULLS LAST,
-    address ASC;
+    CASE WHEN v_sort_order = 'asc'  THEN p.sort_key END ASC  NULLS LAST,
+    CASE WHEN v_sort_order = 'desc' THEN p.sort_key END DESC NULLS LAST,
+    p.address ASC;
 END;
 $$;
