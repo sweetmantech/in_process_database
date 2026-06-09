@@ -87,21 +87,15 @@ BEGIN
       s.username,
       s.total_created_count,
       s.total_collected_count,
-      COUNT(*) OVER () AS total_count
+      COUNT(*) OVER () AS total_count,
+      CASE v_sort_by
+        WHEN 'total_created_count'   THEN s.total_created_count
+        WHEN 'total_collected_count' THEN s.total_collected_count
+      END              AS sort_key
     FROM stats s
     ORDER BY
-      CASE WHEN v_sort_order = 'asc' THEN
-        CASE v_sort_by
-          WHEN 'total_created_count'   THEN s.total_created_count
-          WHEN 'total_collected_count' THEN s.total_collected_count
-        END
-      END ASC NULLS LAST,
-      CASE WHEN v_sort_order = 'desc' THEN
-        CASE v_sort_by
-          WHEN 'total_created_count'   THEN s.total_created_count
-          WHEN 'total_collected_count' THEN s.total_collected_count
-        END
-      END DESC NULLS LAST,
+      CASE WHEN v_sort_order = 'asc'  THEN sort_key END ASC  NULLS LAST,
+      CASE WHEN v_sort_order = 'desc' THEN sort_key END DESC NULLS LAST,
       s.address ASC
     LIMIT p_limit OFFSET (p_page - 1) * p_limit
   )
@@ -113,18 +107,8 @@ BEGIN
     p.total_count
   FROM paged p
   ORDER BY
-    CASE WHEN v_sort_order = 'asc' THEN
-      CASE v_sort_by
-        WHEN 'total_created_count'   THEN p.total_created_count
-        WHEN 'total_collected_count' THEN p.total_collected_count
-      END
-    END ASC NULLS LAST,
-    CASE WHEN v_sort_order = 'desc' THEN
-      CASE v_sort_by
-        WHEN 'total_created_count'   THEN p.total_created_count
-        WHEN 'total_collected_count' THEN p.total_collected_count
-      END
-    END DESC NULLS LAST,
+    CASE WHEN v_sort_order = 'asc'  THEN p.sort_key END ASC  NULLS LAST,
+    CASE WHEN v_sort_order = 'desc' THEN p.sort_key END DESC NULLS LAST,
     p.address ASC;
 END;
 $$;
