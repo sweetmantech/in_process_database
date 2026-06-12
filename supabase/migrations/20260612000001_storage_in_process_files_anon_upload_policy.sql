@@ -1,4 +1,3 @@
-create policy "Allow anon uploads"
-on storage.objects for insert
-to anon
-with check (bucket_id = 'in_process_files');
+CREATE POLICY "Allow anon uploads" ON storage.objects FOR insert TO anon
+WITH
+  CHECK (bucket_id = 'in_process_files');
