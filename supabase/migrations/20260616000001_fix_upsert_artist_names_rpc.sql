@@ -7,7 +7,7 @@ DECLARE
   v_artist_id uuid;
 BEGIN
   FOR artist IN SELECT * FROM jsonb_array_elements(artists) LOOP
-    CONTINUE WHEN artist->>'address' IS NULL;
+    CONTINUE WHEN coalesce(trim(artist->>'address'), '') = '';
 
     v_artist_id := NULL;
 
@@ -19,7 +19,7 @@ BEGIN
     -- 2. Fall back to lookup by username
     IF v_artist_id IS NULL AND artist->>'username' IS NOT NULL THEN
       SELECT id INTO v_artist_id FROM in_process_artists
-      WHERE username = artist->>'username';
+      WHERE lower(username) = lower(artist->>'username');
     END IF;
 
     IF v_artist_id IS NULL THEN
