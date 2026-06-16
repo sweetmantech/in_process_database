@@ -1,0 +1,2 @@
+ALTER TABLE in_process_artists
+RENAME CONSTRAINT in_process_artists_v2_username_key TO in_process_artists_username_key;
