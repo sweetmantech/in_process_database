@@ -1,0 +1,17 @@
+-- Index on in_process_moments(created_at, collection) to support period-filtered
+-- queries in get_active_artists_stats (and any other RPC that filters by time
+-- window before joining to in_process_collections).
+--
+-- The existing idx_in_process_moments_collection_created_at is (collection, created_at),
+-- which is optimal when starting from a known collection. For period filters
+-- ('day', 'week', 'month') across all collections the leading column must be
+-- created_at so the planner can:
+--
+--   1. Index scan moments WHERE created_at >= NOW() - INTERVAL '7 days'
+--      → reduces 262K+ rows to a few thousand
+--   2. Join to in_process_collections on m.collection = c.id
+--      (filter protocol + chain_id via idx_collections_protocol_chain_creator_id)
+--
+-- For period='all' this index is not used (no created_at filter); that case
+-- accepts a full scan of all in_process/8453 moments.
+CREATE INDEX CONCURRENTLY if NOT EXISTS idx_moments_created_at_collection ON public.in_process_moments (created_at, collection);
