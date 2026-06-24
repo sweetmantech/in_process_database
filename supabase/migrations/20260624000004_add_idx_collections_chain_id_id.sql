@@ -1,0 +1,13 @@
+-- Index on in_process_collections(chain_id, id) to support chain_id-first
+-- access in non-curated get_in_process_timeline branches (Branch 3, 4).
+--
+-- Existing indexes start with protocol or creator, neither of which is
+-- filtered in non-curated branches, so the planner falls back to a
+-- sequential scan of in_process_collections before joining to moments.
+--
+-- With this index the planner can start from:
+--   collections[chain_id IN (1, 10, 8453)] → index scan (this index)
+--   → nested loop into in_process_moments via idx_in_process_moments_collection_created_at
+--
+-- instead of scanning all moments first and then probing collections.
+CREATE INDEX CONCURRENTLY if NOT EXISTS idx_collections_chain_id_id ON public.in_process_collections (chain_id, id);
