@@ -1,6 +1,3 @@
--- Fix /collections GET: restrict to in_process protocol and include collections with no tokens.
--- Previously the list-mode moments filter excluded collections that had no child tokens,
--- and there was no protocol filter, so other protocols (catalog, zora, etc.) were included.
 CREATE OR REPLACE FUNCTION public.get_collections (
   p_artist TEXT DEFAULT NULL,
   p_chainid INT DEFAULT NULL,
@@ -12,7 +9,6 @@ DECLARE
   capped_limit    int     := GREATEST(1, LEAST(COALESCE(NULLIF(p_limit, 0), 20), 100));
   clamped_page    int     := GREATEST(1, COALESCE(NULLIF(p_page, 0), 1));
   offset_val      int     := (clamped_page - 1) * capped_limit;
-  -- address-based lookups skip pagination
   v_addr_mode     boolean := (p_addresses IS NOT NULL);
   v_collections   json;
   v_total_count   int;
@@ -23,11 +19,10 @@ BEGIN
       c.uri, c.protocol, c.creator,
       art.username AS creator_username
     FROM in_process_collections c
-    LEFT JOIN in_process_artists art ON art.address = c.creator
+    LEFT JOIN in_process_wallets w_c ON w_c.address = c.creator
+    LEFT JOIN in_process_artists art ON art.id = w_c.artist
     WHERE
-      -- addresses filter
       (p_addresses IS NULL OR c.address = ANY(p_addresses))
-      -- list-mode filters (skipped in addr mode)
       AND (v_addr_mode OR c.protocol = 'in_process')
       AND (p_artist  IS NULL OR c.creator  = LOWER(p_artist))
       AND (p_chainid IS NULL OR c.chain_id = p_chainid)
