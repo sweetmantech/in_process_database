@@ -2,6 +2,7 @@
 -- sale format matches GET /moment response: { pricePerToken, saleStart, saleEnd,
 -- maxTokensPerAddress, fundsRecipient, type }.  null when no in_process_sales row.
 -- type is 'fixedPrice' when currency is the zero address, 'erc20Mint' otherwise.
+-- Depends on: 20260624000002 (in_process_hidden visibility; no moment_is_visible).
 -- ── build_moment_json ─────────────────────────────────────────────────────────
 DROP FUNCTION if EXISTS public.build_moment_json (
   TEXT,
@@ -18,6 +19,20 @@ DROP FUNCTION if EXISTS public.build_moment_json (
   TIMESTAMPTZ
 );
 
+DROP FUNCTION if EXISTS public.build_moment_json (
+  TEXT,
+  NUMERIC,
+  NUMERIC,
+  TEXT,
+  UUID,
+  TEXT,
+  TEXT,
+  TEXT,
+  UUID,
+  JSON,
+  TIMESTAMPTZ
+);
+
 CREATE OR REPLACE FUNCTION public.build_moment_json (
   p_address TEXT,
   p_token_id NUMERIC,
@@ -27,29 +42,33 @@ CREATE OR REPLACE FUNCTION public.build_moment_json (
   p_uri TEXT,
   p_creator TEXT,
   p_creator_username TEXT,
-  p_creator_hidden BOOLEAN,
   p_collection UUID,
   p_metadata JSON,
   p_created_at TIMESTAMPTZ,
   p_sale JSON DEFAULT NULL
 ) returns JSON language sql stable AS $$
   SELECT json_build_object(
-    'address',    p_address,
-    'token_id',   p_token_id::text,
-    'chain_id',   p_chain_id,
-    'protocol',   p_protocol,
-    'id',         p_id,
-    'uri',        p_uri,
-    'creator',    json_build_object('address', p_creator, 'username', p_creator_username, 'hidden', p_creator_hidden),
-    'admins',     COALESCE(get_moment_admins_json(p_collection, p_token_id), '[]'::json),
-    'created_at', p_created_at,
-    'metadata',   p_metadata,
-    'sale',       p_sale
+    'address',        p_address,
+    'token_id',       p_token_id::text,
+    'chain_id',       p_chain_id,
+    'protocol',       p_protocol,
+    'id',             p_id,
+    'uri',            p_uri,
+    'creator',        json_build_object('address', p_creator, 'username', p_creator_username),
+    'admins',         COALESCE(get_moment_admins_json(p_collection, p_token_id), '[]'::json),
+    'hidden',         COALESCE(
+                        (SELECT json_agg(h.artist::text ORDER BY h.artist::text)
+                         FROM in_process_hidden h WHERE h.moment = p_id),
+                        '[]'::json
+                      ),
+    'created_at',     p_created_at,
+    'metadata',       p_metadata,
+    'sale',           p_sale
   )
 $$;
 
 -- ── get_in_process_timeline ───────────────────────────────────────────────────
--- Based on 20260620000002 (4-branch curated×mime logic).
+-- Based on 20260624000002 (4-branch curated×mime logic).
 CREATE OR REPLACE FUNCTION public.get_in_process_timeline (
   p_limit INTEGER DEFAULT 100,
   p_page INTEGER DEFAULT 1,
@@ -72,7 +91,7 @@ BEGIN
   IF p_curated AND p_mime IS NOT NULL THEN
     WITH
     curated_addresses AS MATERIALIZED (
-      SELECT w.address
+      SELECT w.address, w.artist
       FROM in_process_artists a
       INNER JOIN in_process_wallets w ON w.artist = a.id
       WHERE a.username IS NOT NULL AND a.username != ''
@@ -89,7 +108,9 @@ BEGIN
         AND (meta.external_url IS NULL OR meta.external_url NOT LIKE '%/collect/base:%/%')
         AND moment_matches_period(m.created_at, p_period)
         AND moment_matches_channel(m.id, p_channel)
-        AND moment_is_visible(m.collection, m.token_id, p_hidden)
+        AND (p_hidden = true OR NOT EXISTS (
+          SELECT 1 FROM in_process_hidden WHERE moment = m.id AND artist = ca.artist
+        ))
     ),
     total AS (SELECT COUNT(*) AS cnt FROM filtered_ids),
     paged_ids AS (
@@ -106,14 +127,13 @@ BEGIN
         END                                                      AS created_at,
         c.address, c.chain_id, c.protocol, c.creator,
         da.username                                              AS creator_username,
-        get_creator_hidden(m.collection, m.token_id, c.creator) AS creator_hidden,
         to_jsonb(meta)                                           AS metadata,
         CASE WHEN s.id IS NOT NULL THEN
-          json_build_object(
+          jsonb_build_object(
             'pricePerToken',       s.price_per_token::text,
-            'saleStart',           s.sale_start::bigint,
-            'saleEnd',             s.sale_end::bigint,
-            'maxTokensPerAddress', s.max_tokens_per_address::bigint,
+            'saleStart',           s.sale_start,
+            'saleEnd',             s.sale_end,
+            'maxTokensPerAddress', s.max_tokens_per_address,
             'fundsRecipient',      s.funds_recipient,
             'type',                CASE WHEN s.currency = '0x0000000000000000000000000000000000000000'
                                         THEN 'fixedPrice' ELSE 'erc20Mint' END
@@ -132,9 +152,9 @@ BEGIN
       json_agg(
         build_moment_json(
           md.address, md.token_id, md.chain_id, md.protocol::text, md.id, md.uri,
-          md.creator, md.creator_username, md.creator_hidden,
+          md.creator, md.creator_username,
           md.collection, md.metadata::json, md.created_at,
-          md.sale
+          md.sale::json
         )
         ORDER BY md.created_at DESC, md.token_id DESC
       )
@@ -145,7 +165,7 @@ BEGIN
   ELSIF p_curated THEN
     WITH
     curated_addresses AS MATERIALIZED (
-      SELECT w.address
+      SELECT w.address, w.artist
       FROM in_process_artists a
       INNER JOIN in_process_wallets w ON w.artist = a.id
       WHERE a.username IS NOT NULL AND a.username != ''
@@ -159,7 +179,9 @@ BEGIN
       WHERE
         moment_matches_period(m.created_at, p_period)
         AND moment_matches_channel(m.id, p_channel)
-        AND moment_is_visible(m.collection, m.token_id, p_hidden)
+        AND (p_hidden = true OR NOT EXISTS (
+          SELECT 1 FROM in_process_hidden WHERE moment = m.id AND artist = ca.artist
+        ))
         AND NOT EXISTS (
           SELECT 1 FROM in_process_metadata meta2
           WHERE meta2.moment = m.id
@@ -181,14 +203,13 @@ BEGIN
         END                                                      AS created_at,
         c.address, c.chain_id, c.protocol, c.creator,
         da.username                                              AS creator_username,
-        get_creator_hidden(m.collection, m.token_id, c.creator) AS creator_hidden,
         to_jsonb(meta)                                           AS metadata,
         CASE WHEN s.id IS NOT NULL THEN
-          json_build_object(
+          jsonb_build_object(
             'pricePerToken',       s.price_per_token::text,
-            'saleStart',           s.sale_start::bigint,
-            'saleEnd',             s.sale_end::bigint,
-            'maxTokensPerAddress', s.max_tokens_per_address::bigint,
+            'saleStart',           s.sale_start,
+            'saleEnd',             s.sale_end,
+            'maxTokensPerAddress', s.max_tokens_per_address,
             'fundsRecipient',      s.funds_recipient,
             'type',                CASE WHEN s.currency = '0x0000000000000000000000000000000000000000'
                                         THEN 'fixedPrice' ELSE 'erc20Mint' END
@@ -207,9 +228,9 @@ BEGIN
       json_agg(
         build_moment_json(
           md.address, md.token_id, md.chain_id, md.protocol::text, md.id, md.uri,
-          md.creator, md.creator_username, md.creator_hidden,
+          md.creator, md.creator_username,
           md.collection, md.metadata::json, md.created_at,
-          md.sale
+          md.sale::json
         )
         ORDER BY md.created_at DESC, md.token_id DESC
       )
@@ -223,13 +244,16 @@ BEGIN
       FROM in_process_metadata meta
       INNER JOIN in_process_moments m ON m.id = meta.moment
       INNER JOIN in_process_collections c ON m.collection = c.id
+      LEFT JOIN in_process_wallets w_creator ON w_creator.address = c.creator
       WHERE meta.content->>'mime' LIKE p_mime
         AND (meta.content->>'uri' IS NOT NULL AND meta.content->>'uri' != '')
         AND (meta.external_url IS NULL OR meta.external_url NOT LIKE '%/collect/base:%/%')
         AND (p_chainid IS NOT NULL AND c.chain_id = p_chainid OR p_chainid IS NULL AND c.chain_id IN (1, 10, 8453))
         AND moment_matches_period(m.created_at, p_period)
         AND moment_matches_channel(m.id, p_channel)
-        AND moment_is_visible(m.collection, m.token_id, p_hidden)
+        AND (p_hidden = true OR NOT EXISTS (
+          SELECT 1 FROM in_process_hidden WHERE moment = m.id AND artist = w_creator.artist
+        ))
     ),
     total AS (SELECT COUNT(*) AS cnt FROM filtered_ids),
     paged_ids AS (
@@ -246,14 +270,13 @@ BEGIN
         END                                                      AS created_at,
         c.address, c.chain_id, c.protocol, c.creator,
         da.username                                              AS creator_username,
-        get_creator_hidden(m.collection, m.token_id, c.creator) AS creator_hidden,
         to_jsonb(meta)                                           AS metadata,
         CASE WHEN s.id IS NOT NULL THEN
-          json_build_object(
+          jsonb_build_object(
             'pricePerToken',       s.price_per_token::text,
-            'saleStart',           s.sale_start::bigint,
-            'saleEnd',             s.sale_end::bigint,
-            'maxTokensPerAddress', s.max_tokens_per_address::bigint,
+            'saleStart',           s.sale_start,
+            'saleEnd',             s.sale_end,
+            'maxTokensPerAddress', s.max_tokens_per_address,
             'fundsRecipient',      s.funds_recipient,
             'type',                CASE WHEN s.currency = '0x0000000000000000000000000000000000000000'
                                         THEN 'fixedPrice' ELSE 'erc20Mint' END
@@ -272,9 +295,9 @@ BEGIN
       json_agg(
         build_moment_json(
           md.address, md.token_id, md.chain_id, md.protocol::text, md.id, md.uri,
-          md.creator, md.creator_username, md.creator_hidden,
+          md.creator, md.creator_username,
           md.collection, md.metadata::json, md.created_at,
-          md.sale
+          md.sale::json
         )
         ORDER BY md.created_at DESC, md.token_id DESC
       )
@@ -287,11 +310,14 @@ BEGIN
       SELECT DISTINCT m.id, m.token_id, m.created_at
       FROM in_process_moments m
       INNER JOIN in_process_collections c ON m.collection = c.id
+      LEFT JOIN in_process_wallets w_creator ON w_creator.address = c.creator
       WHERE
         (p_chainid IS NOT NULL AND c.chain_id = p_chainid OR p_chainid IS NULL AND c.chain_id IN (1, 10, 8453))
         AND moment_matches_period(m.created_at, p_period)
         AND moment_matches_channel(m.id, p_channel)
-        AND moment_is_visible(m.collection, m.token_id, p_hidden)
+        AND (p_hidden = true OR NOT EXISTS (
+          SELECT 1 FROM in_process_hidden WHERE moment = m.id AND artist = w_creator.artist
+        ))
         AND NOT EXISTS (
           SELECT 1 FROM in_process_metadata meta2
           WHERE meta2.moment = m.id
@@ -313,14 +339,13 @@ BEGIN
         END                                                      AS created_at,
         c.address, c.chain_id, c.protocol, c.creator,
         da.username                                              AS creator_username,
-        get_creator_hidden(m.collection, m.token_id, c.creator) AS creator_hidden,
         to_jsonb(meta)                                           AS metadata,
         CASE WHEN s.id IS NOT NULL THEN
-          json_build_object(
+          jsonb_build_object(
             'pricePerToken',       s.price_per_token::text,
-            'saleStart',           s.sale_start::bigint,
-            'saleEnd',             s.sale_end::bigint,
-            'maxTokensPerAddress', s.max_tokens_per_address::bigint,
+            'saleStart',           s.sale_start,
+            'saleEnd',             s.sale_end,
+            'maxTokensPerAddress', s.max_tokens_per_address,
             'fundsRecipient',      s.funds_recipient,
             'type',                CASE WHEN s.currency = '0x0000000000000000000000000000000000000000'
                                         THEN 'fixedPrice' ELSE 'erc20Mint' END
@@ -339,9 +364,9 @@ BEGIN
       json_agg(
         build_moment_json(
           md.address, md.token_id, md.chain_id, md.protocol::text, md.id, md.uri,
-          md.creator, md.creator_username, md.creator_hidden,
+          md.creator, md.creator_username,
           md.collection, md.metadata::json, md.created_at,
-          md.sale
+          md.sale::json
         )
         ORDER BY md.created_at DESC, md.token_id DESC
       )
@@ -354,7 +379,7 @@ END;
 $function$;
 
 -- ── get_artist_timeline ───────────────────────────────────────────────────────
--- Based on 20260617000006.
+-- Based on 20260624000002.
 DROP FUNCTION if EXISTS public.get_artist_timeline (
   TEXT,
   TEXT,
@@ -419,7 +444,9 @@ BEGIN
         AND (p_chainid IS NOT NULL AND c.chain_id = p_chainid OR p_chainid IS NULL AND c.chain_id IN (1, 10, 8453))
         AND moment_matches_period(m.created_at, p_period)
         AND moment_matches_channel(m.id, p_channel)
-        AND (p_hidden = true OR get_creator_hidden(m.collection, m.token_id, c.creator) = false)
+        AND (p_hidden = true OR NOT EXISTS (
+          SELECT 1 FROM in_process_hidden WHERE moment = m.id AND artist = v_artist_uuid
+        ))
         AND (NOT p_curated OR EXISTS (
           SELECT 1 FROM in_process_wallets wcr
           JOIN in_process_artists acr ON acr.id = wcr.artist
@@ -443,7 +470,9 @@ BEGIN
         AND (p_chainid IS NOT NULL AND c.chain_id = p_chainid OR p_chainid IS NULL AND c.chain_id IN (1, 10, 8453))
         AND moment_matches_period(m.created_at, p_period)
         AND moment_matches_channel(m.id, p_channel)
-        AND (p_hidden = true OR get_creator_hidden(m.collection, m.token_id, adm.artist_address) = false)
+        AND (p_hidden = true OR NOT EXISTS (
+          SELECT 1 FROM in_process_hidden WHERE moment = m.id AND artist = v_artist_uuid
+        ))
         AND (NOT p_curated OR EXISTS (
           SELECT 1 FROM in_process_wallets wcr
           JOIN in_process_artists acr ON acr.id = wcr.artist
@@ -465,14 +494,13 @@ BEGIN
         END                                                           AS created_at,
         c.address, c.chain_id, c.protocol, c.creator,
         da.username                                                   AS creator_username,
-        get_creator_hidden(m.collection, m.token_id, c.creator)      AS creator_hidden,
         to_jsonb(meta)                                                AS metadata,
         CASE WHEN s.id IS NOT NULL THEN
-          json_build_object(
+          jsonb_build_object(
             'pricePerToken',       s.price_per_token::text,
-            'saleStart',           s.sale_start::bigint,
-            'saleEnd',             s.sale_end::bigint,
-            'maxTokensPerAddress', s.max_tokens_per_address::bigint,
+            'saleStart',           s.sale_start,
+            'saleEnd',             s.sale_end,
+            'maxTokensPerAddress', s.max_tokens_per_address,
             'fundsRecipient',      s.funds_recipient,
             'type',                CASE WHEN s.currency = '0x0000000000000000000000000000000000000000'
                                         THEN 'fixedPrice' ELSE 'erc20Mint' END
@@ -491,9 +519,9 @@ BEGIN
       json_agg(
         build_moment_json(
           md.address, md.token_id, md.chain_id, md.protocol::text, md.id, md.uri,
-          md.creator, md.creator_username, md.creator_hidden,
+          md.creator, md.creator_username,
           md.collection, md.metadata::json, md.created_at,
-          md.sale
+          md.sale::json
         )
         ORDER BY md.created_at DESC, md.token_id DESC
       )
@@ -515,7 +543,9 @@ BEGIN
         AND (p_chainid IS NOT NULL AND c.chain_id = p_chainid OR p_chainid IS NULL AND c.chain_id IN (1, 10, 8453))
         AND moment_matches_period(m.created_at, p_period)
         AND moment_matches_channel(m.id, p_channel)
-        AND (p_hidden = true OR get_creator_hidden(m.collection, m.token_id, c.creator) = false)
+        AND (p_hidden = true OR NOT EXISTS (
+          SELECT 1 FROM in_process_hidden WHERE moment = m.id AND artist = v_artist_uuid
+        ))
         AND (NOT p_curated OR EXISTS (
           SELECT 1 FROM in_process_wallets wcr
           JOIN in_process_artists acr ON acr.id = wcr.artist
@@ -540,7 +570,9 @@ BEGIN
         AND (p_chainid IS NOT NULL AND c.chain_id = p_chainid OR p_chainid IS NULL AND c.chain_id IN (1, 10, 8453))
         AND moment_matches_period(m.created_at, p_period)
         AND moment_matches_channel(m.id, p_channel)
-        AND (p_hidden = true OR get_creator_hidden(m.collection, m.token_id, adm.artist_address) = false)
+        AND (p_hidden = true OR NOT EXISTS (
+          SELECT 1 FROM in_process_hidden WHERE moment = m.id AND artist = v_artist_uuid
+        ))
         AND (NOT p_curated OR EXISTS (
           SELECT 1 FROM in_process_wallets wcr
           JOIN in_process_artists acr ON acr.id = wcr.artist
@@ -567,14 +599,13 @@ BEGIN
         END                                                           AS created_at,
         c.address, c.chain_id, c.protocol, c.creator,
         da.username                                                   AS creator_username,
-        get_creator_hidden(m.collection, m.token_id, c.creator)      AS creator_hidden,
         to_jsonb(meta)                                                AS metadata,
         CASE WHEN s.id IS NOT NULL THEN
-          json_build_object(
+          jsonb_build_object(
             'pricePerToken',       s.price_per_token::text,
-            'saleStart',           s.sale_start::bigint,
-            'saleEnd',             s.sale_end::bigint,
-            'maxTokensPerAddress', s.max_tokens_per_address::bigint,
+            'saleStart',           s.sale_start,
+            'saleEnd',             s.sale_end,
+            'maxTokensPerAddress', s.max_tokens_per_address,
             'fundsRecipient',      s.funds_recipient,
             'type',                CASE WHEN s.currency = '0x0000000000000000000000000000000000000000'
                                         THEN 'fixedPrice' ELSE 'erc20Mint' END
@@ -593,9 +624,9 @@ BEGIN
       json_agg(
         build_moment_json(
           md.address, md.token_id, md.chain_id, md.protocol::text, md.id, md.uri,
-          md.creator, md.creator_username, md.creator_hidden,
+          md.creator, md.creator_username,
           md.collection, md.metadata::json, md.created_at,
-          md.sale
+          md.sale::json
         )
         ORDER BY md.created_at DESC, md.token_id DESC
       )
@@ -608,7 +639,7 @@ END;
 $function$;
 
 -- ── get_collection_timeline ───────────────────────────────────────────────────
--- Based on 20260617000006.
+-- Based on 20260624000002.
 DROP FUNCTION if EXISTS public.get_collection_timeline (
   TEXT,
   INTEGER,
@@ -657,7 +688,9 @@ BEGIN
         AND moment_matches_period(m.created_at, p_period)
         AND moment_matches_channel(m.id, p_channel)
         AND (p_artist IS NULL OR da.username ILIKE p_artist OR w_c.address = LOWER(p_artist))
-        AND moment_is_visible(m.collection, m.token_id, p_hidden)
+        AND (p_hidden = true OR NOT EXISTS (
+          SELECT 1 FROM in_process_hidden WHERE moment = m.id AND artist = w_c.artist
+        ))
         AND (NOT p_curated OR (da.username IS NOT NULL AND da.username != ''))
     ),
     total AS (SELECT COUNT(*) AS cnt FROM filtered_ids),
@@ -675,14 +708,13 @@ BEGIN
         END                                                           AS created_at,
         c.address, c.chain_id, c.protocol, c.creator,
         da.username                                                   AS creator_username,
-        get_creator_hidden(m.collection, m.token_id, c.creator)      AS creator_hidden,
         to_jsonb(meta)                                                AS metadata,
         CASE WHEN s.id IS NOT NULL THEN
-          json_build_object(
+          jsonb_build_object(
             'pricePerToken',       s.price_per_token::text,
-            'saleStart',           s.sale_start::bigint,
-            'saleEnd',             s.sale_end::bigint,
-            'maxTokensPerAddress', s.max_tokens_per_address::bigint,
+            'saleStart',           s.sale_start,
+            'saleEnd',             s.sale_end,
+            'maxTokensPerAddress', s.max_tokens_per_address,
             'fundsRecipient',      s.funds_recipient,
             'type',                CASE WHEN s.currency = '0x0000000000000000000000000000000000000000'
                                         THEN 'fixedPrice' ELSE 'erc20Mint' END
@@ -701,9 +733,9 @@ BEGIN
       json_agg(
         build_moment_json(
           md.address, md.token_id, md.chain_id, md.protocol::text, md.id, md.uri,
-          md.creator, md.creator_username, md.creator_hidden,
+          md.creator, md.creator_username,
           md.collection, md.metadata::json, md.created_at,
-          md.sale
+          md.sale::json
         )
         ORDER BY md.created_at DESC, md.token_id DESC
       )
@@ -722,7 +754,9 @@ BEGIN
         AND moment_matches_period(m.created_at, p_period)
         AND moment_matches_channel(m.id, p_channel)
         AND (p_artist IS NULL OR da.username ILIKE p_artist OR w_c.address = LOWER(p_artist))
-        AND moment_is_visible(m.collection, m.token_id, p_hidden)
+        AND (p_hidden = true OR NOT EXISTS (
+          SELECT 1 FROM in_process_hidden WHERE moment = m.id AND artist = w_c.artist
+        ))
         AND (NOT p_curated OR (da.username IS NOT NULL AND da.username != ''))
         AND NOT EXISTS (
           SELECT 1 FROM in_process_metadata meta2
@@ -745,14 +779,13 @@ BEGIN
         END                                                           AS created_at,
         c.address, c.chain_id, c.protocol, c.creator,
         da.username                                                   AS creator_username,
-        get_creator_hidden(m.collection, m.token_id, c.creator)      AS creator_hidden,
         to_jsonb(meta)                                                AS metadata,
         CASE WHEN s.id IS NOT NULL THEN
-          json_build_object(
+          jsonb_build_object(
             'pricePerToken',       s.price_per_token::text,
-            'saleStart',           s.sale_start::bigint,
-            'saleEnd',             s.sale_end::bigint,
-            'maxTokensPerAddress', s.max_tokens_per_address::bigint,
+            'saleStart',           s.sale_start,
+            'saleEnd',             s.sale_end,
+            'maxTokensPerAddress', s.max_tokens_per_address,
             'fundsRecipient',      s.funds_recipient,
             'type',                CASE WHEN s.currency = '0x0000000000000000000000000000000000000000'
                                         THEN 'fixedPrice' ELSE 'erc20Mint' END
@@ -771,9 +804,9 @@ BEGIN
       json_agg(
         build_moment_json(
           md.address, md.token_id, md.chain_id, md.protocol::text, md.id, md.uri,
-          md.creator, md.creator_username, md.creator_hidden,
+          md.creator, md.creator_username,
           md.collection, md.metadata::json, md.created_at,
-          md.sale
+          md.sale::json
         )
         ORDER BY md.created_at DESC, md.token_id DESC
       )
