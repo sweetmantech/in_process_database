@@ -4,8 +4,24 @@
 -- new subquery/join, since all 3 timeline RPCs already join that table.
 -- Depends on: 20260703000001 (build_moment_json with comments count).
 -- ── build_moment_json ─────────────────────────────────────────────────────────
--- Use CREATE OR REPLACE only — timeline RPCs depend on this function;
--- dropping the current overload would fail without CASCADE.
+-- Adding p_collection_name changes the arg type list (12 -> 13 params), so
+-- CREATE OR REPLACE alone would add a new overload instead of replacing the
+-- old one. Drop the old 12-arg overload first (same pattern as 20260630000001).
+DROP FUNCTION if EXISTS public.build_moment_json (
+  TEXT,
+  NUMERIC,
+  NUMERIC,
+  TEXT,
+  UUID,
+  TEXT,
+  TEXT,
+  TEXT,
+  UUID,
+  JSON,
+  TIMESTAMPTZ,
+  JSON
+);
+
 CREATE OR REPLACE FUNCTION public.build_moment_json (
   p_address TEXT,
   p_token_id NUMERIC,
