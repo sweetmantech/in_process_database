@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION public.build_moment_comment_json (
   p_comment_id TEXT,
   p_reply_to_id TEXT,
   p_nonce TEXT,
-  p_reply_count INT DEFAULT 0,
+  p_reply_count BIGINT DEFAULT 0,
   p_replies JSON DEFAULT '[]'::JSON
 ) returns JSON language sql stable AS $$
   SELECT json_build_object(
