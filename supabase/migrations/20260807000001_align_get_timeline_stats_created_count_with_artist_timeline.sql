@@ -2,6 +2,7 @@
 --   - prod chains (1, 10, 8453); no protocol filter
 --   - exclude artist-hidden moments
 --   - exclude Zora collect-page mirror metadata (external_url LIKE '%/collect/base:%/%')
+-- Keep mutual joins split (exact token vs token_id = 0) to avoid OR that blocks index use.
 -- eth_archived / usdc_archived stay scoped to in_process + Base (8453).
 CREATE OR REPLACE FUNCTION public.get_timeline_stats (p_artist TEXT) returns TABLE (
   created_count BIGINT,
@@ -41,18 +42,48 @@ CREATE OR REPLACE FUNCTION public.get_timeline_stats (p_artist TEXT) returns TAB
 
     UNION
 
-    -- mutual: admin on moments (exact token or collection-level token_id = 0),
-    -- excluding collections this artist created
+    -- mutual: exact token admin, excluding collections this artist created
     SELECT DISTINCT m.id AS moment_id
     FROM artist_addrs aa
     INNER JOIN public.in_process_admins adm
       ON adm.artist_address = aa.address
+     AND adm.token_id <> 0
     INNER JOIN public.in_process_moments m
       ON m.collection = adm.collection
-     AND (m.token_id = adm.token_id OR adm.token_id = 0)
+     AND m.token_id = adm.token_id
     INNER JOIN public.in_process_collections c
       ON c.id = m.collection
      AND c.chain_id IN (1, 10, 8453)
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM artist_addrs aa2
+      WHERE aa2.address = c.creator
+    )
+    AND NOT EXISTS (
+      SELECT 1
+      FROM public.in_process_hidden h
+      WHERE h.moment = m.id
+        AND h.artist = aa.artist_id
+    )
+    AND NOT EXISTS (
+      SELECT 1
+      FROM public.in_process_metadata meta
+      WHERE meta.moment = m.id
+        AND meta.external_url LIKE '%/collect/base:%/%'
+    )
+
+    UNION
+
+    -- mutual: collection-level admin (token_id = 0), excluding creator collections
+    SELECT DISTINCT m.id AS moment_id
+    FROM artist_addrs aa
+    INNER JOIN public.in_process_admins adm
+      ON adm.artist_address = aa.address
+     AND adm.token_id = 0
+    INNER JOIN public.in_process_collections c
+      ON c.id = adm.collection
+     AND c.chain_id IN (1, 10, 8453)
+    INNER JOIN public.in_process_moments m ON m.collection = c.id
     WHERE NOT EXISTS (
       SELECT 1
       FROM artist_addrs aa2
