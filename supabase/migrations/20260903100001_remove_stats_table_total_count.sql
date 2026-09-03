@@ -1,6 +1,8 @@
 -- Remove total_count from analytics table stats RPCs.
 -- Row counts for tab badges come from get_analytics_stats; pagination uses page size on the client.
 -- ── 1. get_active_artists_stats ───────────────────────────────────────────────
+DROP FUNCTION if EXISTS public.get_active_artists_stats (TEXT, INT, INT, TEXT, TEXT, TEXT);
+
 CREATE OR REPLACE FUNCTION public.get_active_artists_stats (
   p_period TEXT DEFAULT 'all',
   p_limit INT DEFAULT 20,
@@ -103,7 +105,7 @@ BEGIN
       SELECT
         s.artist_id::TEXT, s.username, s.wallets,
         s.created_count, s.airdropped_count,
-        s.telegram_count, s.web_count, s.api_count, s.sms_count,
+        s.telegram_count, s.web_count, s.api_count, s.sms_count
       FROM stats s
       ORDER BY
         CASE WHEN v_sort_order = 'asc'  THEN s.airdropped_count END ASC  NULLS LAST,
@@ -162,7 +164,7 @@ BEGIN
       ),
       paged AS (
         SELECT sb.artist_id, sb.username, sb.wallets, sb.created_count,
-          sb.telegram_count, sb.web_count, sb.api_count, sb.sms_count,
+          sb.telegram_count, sb.web_count, sb.api_count, sb.sms_count
           FROM stats_base sb
         ORDER BY
           CASE WHEN v_sort_order = 'asc' THEN CASE v_sort_by
@@ -290,7 +292,7 @@ BEGIN
     SELECT
       s.artist_id::TEXT, s.username, s.wallets,
       s.created_count, s.airdropped_count,
-      s.telegram_count, s.web_count, s.api_count, s.sms_count,
+      s.telegram_count, s.web_count, s.api_count, s.sms_count
     FROM stats s
     ORDER BY
       CASE WHEN v_sort_order = 'asc'  THEN s.airdropped_count END ASC  NULLS LAST,
@@ -341,7 +343,7 @@ BEGIN
     ),
     paged AS (
       SELECT sb.artist_id, sb.username, sb.wallets, sb.created_count,
-        sb.telegram_count, sb.web_count, sb.api_count, sb.sms_count,
+        sb.telegram_count, sb.web_count, sb.api_count, sb.sms_count
       FROM stats_base sb
       ORDER BY
         CASE WHEN v_sort_order = 'asc' THEN CASE v_sort_by
@@ -401,6 +403,8 @@ END;
 $$;
 
 -- ── 2. get_collectors_stats ───────────────────────────────────────────────────
+DROP FUNCTION if EXISTS public.get_collectors_stats (TEXT, INT, INT, TEXT, TEXT, TEXT);
+
 CREATE OR REPLACE FUNCTION public.get_collectors_stats (
   p_period TEXT DEFAULT 'all',
   p_limit INT DEFAULT 20,
@@ -475,7 +479,7 @@ BEGIN
       GROUP BY pt.artist_id, pt.username, aw.wallets
     ),
     paged AS (
-      SELECT s.artist_id, s.username, s.wallets, s.collected_count, s.eth_spent, s.usdc_spent,
+      SELECT s.artist_id, s.username, s.wallets, s.collected_count, s.eth_spent, s.usdc_spent
       FROM stats s
       ORDER BY
         CASE WHEN v_sort_order = 'asc' THEN CASE v_sort_by
@@ -560,7 +564,7 @@ BEGIN
     GROUP BY pt.artist_id, pt.username, aw.wallets
   ),
   paged AS (
-    SELECT s.artist_id, s.username, s.wallets, s.collected_count, s.eth_spent, s.usdc_spent,
+    SELECT s.artist_id, s.username, s.wallets, s.collected_count, s.eth_spent, s.usdc_spent
     FROM stats s
     ORDER BY
       CASE WHEN v_sort_order = 'asc' THEN CASE v_sort_by
@@ -597,6 +601,8 @@ END;
 $$;
 
 -- ── 3. get_artists_collectors_stats ──────────────────────────────────────────
+DROP FUNCTION if EXISTS public.get_artists_collectors_stats (TEXT, INT, INT, TEXT, TEXT, TEXT);
+
 CREATE OR REPLACE FUNCTION public.get_artists_collectors_stats (
   p_period TEXT DEFAULT 'all',
   p_limit INT DEFAULT 20,
