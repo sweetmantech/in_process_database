@@ -1,20 +1,5 @@
--- Denormalize mint count onto moments for O(1) sold_out in timeline JSON.
--- in_process_transfers only indexes mint TransferSingle (from = zero), so
--- SUM(quantity) matches on-chain totalMinted / getInProcessSoldOut.
---
--- Order: column → backfill → trigger → build_moment_json
--- (backfill before trigger so concurrent inserts cannot race with SET)
-
 ALTER TABLE public.in_process_moments
 ADD COLUMN IF NOT EXISTS total_minted BIGINT NOT NULL DEFAULT 0;
-
--- Backfill from existing mint transfers before enabling the trigger.
-UPDATE public.in_process_moments m
-SET total_minted = COALESCE((
-  SELECT SUM(t.quantity)::bigint
-  FROM public.in_process_transfers t
-  WHERE t.moment = m.id
-), 0);
 
 CREATE OR REPLACE FUNCTION public.sync_moment_total_minted () returns trigger language plpgsql AS $$
 BEGIN
@@ -47,11 +32,10 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS sync_moment_total_minted_trigger ON public.in_process_transfers;
+DROP TRIGGER if EXISTS sync_moment_total_minted_trigger ON public.in_process_transfers;
 
 CREATE TRIGGER sync_moment_total_minted_trigger
-AFTER INSERT OR UPDATE OR DELETE ON public.in_process_transfers
-FOR EACH ROW
+AFTER INSERT OR UPDATE OR DELETE ON public.in_process_transfers FOR EACH ROW
 EXECUTE FUNCTION public.sync_moment_total_minted ();
 
 -- Same 13-arg signature as 20260717000000 — REPLACE only, no DROP.
