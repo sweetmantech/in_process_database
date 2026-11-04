@@ -1,5 +1,5 @@
 ALTER TABLE public.in_process_moments
-ADD COLUMN released_at TIMESTAMPTZ;
+ADD COLUMN IF NOT EXISTS released_at TIMESTAMPTZ;
 
 CREATE OR REPLACE FUNCTION public.moment_released_at (p_moment UUID, p_created_at TIMESTAMPTZ) returns TIMESTAMPTZ language sql stable AS $function$
   SELECT COALESCE(
@@ -8,7 +8,6 @@ CREATE OR REPLACE FUNCTION public.moment_released_at (p_moment UUID, p_created_a
       FROM in_process_sales s
       WHERE s.moment = p_moment
         AND s.sale_start <> 0
-      ORDER BY s.schedule_num NULLS FIRST
       LIMIT 1
     ),
     p_created_at
@@ -48,8 +47,7 @@ $function$;
 
 CREATE TRIGGER sync_moment_released_at
 AFTER INSERT OR DELETE OR UPDATE OF sale_start,
-moment,
-schedule_num ON public.in_process_sales FOR EACH ROW
+moment ON public.in_process_sales FOR EACH ROW
 EXECUTE FUNCTION public.sync_moment_released_at ();
 
 UPDATE public.in_process_moments m
